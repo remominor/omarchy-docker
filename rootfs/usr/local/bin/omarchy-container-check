@@ -7,6 +7,15 @@ export HOME=/home/omarchy
 export XDG_RUNTIME_DIR=/run/user/1000
 export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
 
+user_env=(
+  XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR"
+  DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS"
+)
+mapfile -t compositor_env < <(
+  runuser -u omarchy -- env "${user_env[@]}" systemctl --user show-environment 2>/dev/null |
+    grep -E '^(HYPRLAND_INSTANCE_SIGNATURE|WAYLAND_DISPLAY|XDG_CURRENT_DESKTOP|XDG_SESSION_TYPE)='
+)
+
 echo "=== CONTAINER ==="
 cat /etc/os-release 2>/dev/null | head
 echo
@@ -29,26 +38,21 @@ echo
 echo "=== USER SYSTEMD ==="
 systemctl status user@1000.service --no-pager 2>&1 | sed -n '1,80p'
 echo
-runuser -u omarchy -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
-  DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+runuser -u omarchy -- env "${user_env[@]}" \
   systemctl --user --no-pager --full status omarchy-desktop.service omarchy-sunshine.service 2>&1
 echo
 
 echo "=== HYPRLAND ==="
-runuser -u omarchy -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
-  DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+runuser -u omarchy -- env "${user_env[@]}" "${compositor_env[@]}" \
   hyprctl version 2>&1
-runuser -u omarchy -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
-  DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+runuser -u omarchy -- env "${user_env[@]}" "${compositor_env[@]}" \
   hyprctl monitors all 2>&1
 echo
 
 echo "=== AUDIO ==="
-runuser -u omarchy -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
-  DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+runuser -u omarchy -- env "${user_env[@]}" \
   pactl info 2>&1 | sed -n '1,80p'
-runuser -u omarchy -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
-  DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+runuser -u omarchy -- env "${user_env[@]}" \
   pactl list short sinks 2>&1
 echo
 tail -60 /home/omarchy/.local/state/omarchy-container/audio-init.log 2>/dev/null

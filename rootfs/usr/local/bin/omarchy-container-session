@@ -11,7 +11,12 @@ export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
 export XDG_SESSION_TYPE=wayland
 export XDG_CURRENT_DESKTOP=Hyprland
 export XDG_SESSION_DESKTOP=Hyprland
+export XDG_SEAT=seat0
+export XDG_SESSION_ID=container
+export XDG_VTNR=0
 export OMARCHY_PATH=/usr/share/omarchy
+export LIBSEAT_BACKEND=seatd
+export SEATD_SOCK=/run/seatd.sock
 
 # NVIDIA/Wayland defaults. Do not force vendor-specific GL variables unless the
 # NVIDIA runtime has actually injected the driver.
@@ -34,4 +39,4 @@ echo "[$(date -Is)] starting UWSM/Hyprland" \
 # UWSM provides the user-systemd environment Omarchy 4 expects. Hyprland 0.56+
 # has a mandatory headless Aquamarine backend and optional DRM backend.
 exec uwsm start -F -eD Hyprland -N "Omarchy Container" \
-  -C "Headless Omarchy desktop on Unraid" -- /usr/bin/Hyprland
+  -C "Headless Omarchy desktop on Unraid" -- /usr/sbin/start-hyprland

@@ -13,9 +13,20 @@ exec >>"$log" 2>&1
 
 echo "[$(date -Is)] headless init starting"
 
+refresh_compositor_env() {
+  while IFS='=' read -r name value; do
+    case "$name" in
+      HYPRLAND_INSTANCE_SIGNATURE|WAYLAND_DISPLAY|XDG_CURRENT_DESKTOP|XDG_SESSION_TYPE|XDG_SESSION_DESKTOP) \
+        export "$name=$value" \
+        ;;
+    esac
+  done < <(systemctl --user show-environment)
+}
+
 # Hyprland may already have a headless output when there is no usable DRM seat.
 # If not, create a stable, explicitly named one.
-for _ in {1..200}; do
+for _ in {1..600}; do
+  refresh_compositor_env
   if hyprctl -j version >/dev/null 2>&1; then
     break
   fi
@@ -34,12 +45,10 @@ if ! hyprctl -j monitors all 2>/dev/null | jq -e \
 fi
 
 echo "Configuring ${OMARCHY_OUTPUT_NAME}: ${OMARCHY_RESOLUTION}@${OMARCHY_REFRESH}, scale ${OMARCHY_SCALE}"
-hyprctl keyword monitor \
-  "${OMARCHY_OUTPUT_NAME},${OMARCHY_RESOLUTION}@${OMARCHY_REFRESH},0x0,${OMARCHY_SCALE}"
+hyprctl eval "hl.monitor({ output = \"${OMARCHY_OUTPUT_NAME}\", mode = \"${OMARCHY_RESOLUTION}@${OMARCHY_REFRESH}\", position = \"0x0\", scale = ${OMARCHY_SCALE} })"
 
 # Keep the workspace on the virtual output.
-hyprctl dispatch focusmonitor "$OMARCHY_OUTPUT_NAME" || true
-hyprctl dispatch workspace 1 || true
+hyprctl eval "hl.dispatch(hl.dsp.focus({ monitor = \"${OMARCHY_OUTPUT_NAME}\" }))" || true
 
 # Refresh user-manager environment so Sunshine sees this Wayland socket.
 systemctl --user import-environment \

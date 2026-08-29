@@ -8,7 +8,7 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/local/sbin/omarchy-start-user
 ExecStop=-/usr/bin/systemctl stop user@1000.service
-TimeoutStartSec=60
+TimeoutStartSec=90
 
 [Install]
 WantedBy=multi-user.target

@@ -41,6 +41,27 @@ hardware controls, and binfmt registration).
 The full profile is intentionally not the first-test default: it is much
 larger and adds many unrelated variables while debugging the compositor/GPU.
 
+## Local build validation
+
+Build and load the default `core` image with Buildx:
+
+```bash
+docker buildx build --load --progress=plain \
+  --build-arg OMARCHY_CHANNEL=stable \
+  --build-arg OMARCHY_PROFILE=core \
+  -t local/omarchy-unraid:test .
+```
+
+Then validate its packages, commands, service files, permissions, linked
+libraries, and seeded configuration:
+
+```bash
+./tests/smoke-image.sh local/omarchy-unraid:test
+```
+
+This smoke test does not prove GPU rendering, Wayland capture, NVENC, or input.
+Those require starting the privileged container with NVIDIA and DRM devices.
+
 ## Recommended first test
 
 Use a different NVIDIA GPU from Steam Headless for the first boot. Once this is
@@ -216,8 +237,8 @@ The compose files persist:
 ```
 
 The image copies Omarchy's `/etc/skel` defaults into an empty persistent home
-on first boot. Existing files are not overwritten. The custom headless
-autostart hook is added if it is missing.
+on first boot. Existing files are not overwritten. A dedicated user service
+creates the headless output after UWSM begins launching Hyprland.
 
 If you want a totally clean retry:
 

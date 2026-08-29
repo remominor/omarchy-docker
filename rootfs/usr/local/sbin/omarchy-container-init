@@ -17,15 +17,6 @@ if [[ ! -e "$home/.omarchy-container-seeded" ]]; then
 fi
 chown -R "$uid:$gid" "$home" /config
 
-# Ensure our autostart hook exists even if an older persistent home predates it.
-autostart="$home/.config/hypr/autostart.lua"
-mkdir -p "$(dirname "$autostart")"
-touch "$autostart"
-if ! grep -Fq '/usr/local/bin/omarchy-headless-init' "$autostart"; then
-  printf '\n-- Docker headless output + Sunshine bootstrap.\no.launch_on_start("/usr/local/bin/omarchy-headless-init")\n' >> "$autostart"
-fi
-chown -R "$uid:$gid" "$home/.config"
-
 # Persist Docker-provided settings for both the system manager and user manager.
 cat > /etc/omarchy-container.env <<EOF
 OMARCHY_PATH=/usr/share/omarchy

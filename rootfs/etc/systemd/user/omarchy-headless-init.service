@@ -1,0 +1,9 @@
+[Unit]
+Description=Configure the Omarchy headless output and start Sunshine
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/omarchy-container.env
+ExecStart=/usr/local/bin/omarchy-headless-init
+RemainAfterExit=yes
+TimeoutStartSec=75

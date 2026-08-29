@@ -10,6 +10,7 @@ services:
     hostname: omarchy
     restart: unless-stopped
     runtime: nvidia
+    cgroup: host
     networks:
       omarchy_net:
         ipv4_address: ${OMARCHY_IP}

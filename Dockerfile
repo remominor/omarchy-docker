@@ -4,9 +4,14 @@ ARG OMARCHY_CHANNEL=stable
 ARG OMARCHY_PROFILE=core
 
 ENV container=docker \
-    LANG=en_US.UTF-8 \
-    LC_ALL=en_US.UTF-8 \
     OMARCHY_PATH=/usr/share/omarchy
+
+# Generate the locale before exporting it so package hooks do not emit locale
+# warnings throughout the build.
+RUN echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen && locale-gen
+
+ENV LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8
 
 # Use Omarchy's Arch snapshot and Omarchy package repo as one coherent package set.
 RUN set -eux; \
@@ -19,13 +24,19 @@ RUN set -eux; \
     printf '\n[omarchy]\nSigLevel = Optional TrustAll\nServer = %s\n' "${OMARCHY_REPO}" >> /etc/pacman.conf; \
     pacman -Syy --noconfirm; \
     pacman -S --noconfirm --needed archlinux-keyring; \
-    pacman -Syu --noconfirm --needed \
+    pacman-key --init; \
+    install -d /tmp/container-install-shims; \
+    printf '#!/bin/sh\nexit 0\n' > /tmp/container-install-shims/modprobe; \
+    printf '#!/bin/sh\nexit 0\n' > /tmp/container-install-shims/udevadm; \
+    chmod 0755 /tmp/container-install-shims/modprobe /tmp/container-install-shims/udevadm; \
+    PATH="/tmp/container-install-shims:${PATH}" pacman -Syu --noconfirm --needed \
       bash bash-completion ca-certificates curl dbus git glib2 \
       sudo shadow util-linux procps-ng iproute2 iputils jq perl \
       systemd polkit pambase \
       base-devel fakeroot pacman-contrib \
       libglvnd egl-wayland vulkan-icd-loader libva mesa-utils vulkan-tools \
-      sunshine
+      sunshine; \
+    rm -rf /tmp/container-install-shims
 
 # Omarchy's meta package intentionally hard-depends on boot-machine components.
 # Supply empty "provides" packages for the pieces a Docker desktop must not own,
@@ -46,6 +57,8 @@ RUN set -eux; \
     runuser -u packagebuilder -- bash -lc 'cd /tmp/omarchy-container-stubs && makepkg --noconfirm'; \
     pacman -U --noconfirm /tmp/omarchy-container-stubs/omarchy-container-stubs-1-1-any.pkg.tar.*; \
     pacman -S --noconfirm --needed omarchy-settings omarchy; \
+    sed -i 's/^SigLevel = Optional TrustAll$/SigLevel = Required DatabaseOptional/' /etc/pacman.conf; \
+    pacman -Syy --noconfirm; \
     case "${OMARCHY_PROFILE}" in \
       core) \
         pacman -S --noconfirm --needed \
@@ -69,9 +82,7 @@ RUN set -eux; \
     pacman -Scc --noconfirm
 
 RUN set -eux; \
-    echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen; \
-    locale-gen; \
-    useradd -m -u 1000 -G wheel,audio,video,input -s /bin/bash omarchy; \
+    useradd -m -u 1000 -G wheel,audio,video,input,seat -s /bin/bash omarchy; \
     cp -aT /etc/skel /home/omarchy; \
     chown -R 1000:1000 /home/omarchy; \
     mkdir -p /opt/omarchy-home-seed /var/lib/systemd/linger /config; \
@@ -82,7 +93,11 @@ RUN set -eux; \
       getty@.service console-getty.service \
       systemd-remount-fs.service \
       systemd-random-seed.service \
-      systemd-machine-id-commit.service || true
+      systemd-machine-id-commit.service \
+      systemd-udevd.service \
+      systemd-udevd-control.socket \
+      systemd-udevd-kernel.socket \
+      systemd-udevd-varlink.socket || true
 
 COPY rootfs/ /
 
@@ -95,11 +110,9 @@ RUN set -eux; \
       /usr/local/bin/omarchy-audio-init \
       /usr/local/sbin/omarchy-container-init \
       /usr/local/sbin/omarchy-start-user; \
+    chmod 0750 /etc/sudoers.d; \
     chmod 0440 /etc/sudoers.d/omarchy-container; \
-    systemctl enable omarchy-user.service; \
-    mkdir -p /opt/omarchy-home-seed/.config/hypr; \
-    printf '\n-- Docker headless output + Sunshine bootstrap.\no.launch_on_start("/usr/local/bin/omarchy-headless-init")\n' \
-      >> /opt/omarchy-home-seed/.config/hypr/autostart.lua; \
+    systemctl enable omarchy-user.service seatd.service; \
     chown -R 1000:1000 /opt/omarchy-home-seed
 
 STOPSIGNAL SIGRTMIN+3

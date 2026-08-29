@@ -10,6 +10,7 @@ services:
     hostname: omarchy
     restart: unless-stopped
     runtime: nvidia
+    cgroup: host
     network_mode: host
     privileged: true
     shm_size: 2gb
