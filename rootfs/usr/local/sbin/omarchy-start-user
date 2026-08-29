@@ -1,0 +1,42 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+uid=1000
+user=omarchy
+runtime="/run/user/$uid"
+
+# Explicitly start the user manager. This is more reliable in Docker than
+# relying on a display manager/PAM login to create user@1000.service.
+systemctl start "user-runtime-dir@${uid}.service"
+systemctl start "user@${uid}.service"
+
+for _ in {1..100}; do
+  [[ -S "$runtime/bus" ]] && break
+  sleep 0.1
+done
+
+if [[ ! -S "$runtime/bus" ]]; then
+  echo "ERROR: user systemd bus did not appear at $runtime/bus" >&2
+  systemctl status "user@${uid}.service" --no-pager || true
+  exit 1
+fi
+
+runuser -u "$user" -- env \
+  XDG_RUNTIME_DIR="$runtime" \
+  DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime/bus" \
+  systemctl --user daemon-reload
+
+runuser -u "$user" -- env \
+  XDG_RUNTIME_DIR="$runtime" \
+  DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime/bus" \
+  systemctl --user start pipewire.socket pipewire-pulse.socket wireplumber.service
+
+runuser -u "$user" -- env \
+  XDG_RUNTIME_DIR="$runtime" \
+  DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime/bus" \
+  /usr/local/bin/omarchy-audio-init
+
+runuser -u "$user" -- env \
+  XDG_RUNTIME_DIR="$runtime" \
+  DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime/bus" \
+  systemctl --user restart omarchy-desktop.service

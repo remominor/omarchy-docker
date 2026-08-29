@@ -1,0 +1,62 @@
+#!/usr/bin/bash
+set +e
+
+source /etc/omarchy-container.env 2>/dev/null || true
+
+export HOME=/home/omarchy
+export XDG_RUNTIME_DIR=/run/user/1000
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+
+echo "=== CONTAINER ==="
+cat /etc/os-release 2>/dev/null | head
+echo
+systemctl is-system-running 2>/dev/null
+echo
+
+echo "=== NVIDIA ==="
+nvidia-smi --query-gpu=index,name,uuid,pci.bus_id,driver_version \
+  --format=csv,noheader 2>&1
+echo
+ls -l /dev/nvidia* /dev/dri/* 2>/dev/null
+echo
+
+echo "=== EGL / VULKAN ==="
+eglinfo -B 2>&1 | sed -n '1,80p'
+echo
+vulkaninfo --summary 2>&1 | sed -n '1,100p'
+echo
+
+echo "=== USER SYSTEMD ==="
+systemctl status user@1000.service --no-pager 2>&1 | sed -n '1,80p'
+echo
+runuser -u omarchy -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+  DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+  systemctl --user --no-pager --full status omarchy-desktop.service omarchy-sunshine.service 2>&1
+echo
+
+echo "=== HYPRLAND ==="
+runuser -u omarchy -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+  DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+  hyprctl version 2>&1
+runuser -u omarchy -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+  DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+  hyprctl monitors all 2>&1
+echo
+
+echo "=== AUDIO ==="
+runuser -u omarchy -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+  DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+  pactl info 2>&1 | sed -n '1,80p'
+runuser -u omarchy -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+  DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+  pactl list short sinks 2>&1
+echo
+tail -60 /home/omarchy/.local/state/omarchy-container/audio-init.log 2>/dev/null
+echo
+
+echo "=== SUNSHINE ==="
+ss -lntup 2>&1 | grep -E 'sunshine|479|489|480|490' || true
+echo
+tail -80 /home/omarchy/.local/state/omarchy-container/headless-init.log 2>/dev/null
+echo
+journalctl --no-pager -n 120 -u omarchy-user.service

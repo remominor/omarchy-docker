@@ -1,0 +1,43 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+source /etc/omarchy-container.env
+
+export HOME=/home/omarchy
+export XDG_RUNTIME_DIR=/run/user/1000
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+
+mkdir -p "$HOME/.local/state/omarchy-container"
+log="$HOME/.local/state/omarchy-container/audio-init.log"
+exec >>"$log" 2>&1
+
+echo "[$(date -Is)] waiting for PipeWire/Pulse"
+
+for _ in {1..100}; do
+  if pactl info >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.1
+done
+
+if ! pactl info >/dev/null 2>&1; then
+  echo "ERROR: PipeWire Pulse server did not become ready"
+  exit 1
+fi
+
+# A headless compositor normally has no physical sink. Sunshine can capture
+# the monitor of this null sink exactly like a physical desktop audio device.
+if ! pactl list short sinks | awk '{print $2}' | grep -Fxq 'omarchy_stream'; then
+  pactl load-module module-null-sink \
+    sink_name=omarchy_stream \
+    sink_properties=device.description=Omarchy-Stream
+fi
+
+pactl set-default-sink omarchy_stream
+pactl set-default-source omarchy_stream.monitor
+
+echo "Sinks:"
+pactl list short sinks
+echo "Sources:"
+pactl list short sources
+echo "[$(date -Is)] audio ready"

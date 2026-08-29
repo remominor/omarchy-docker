@@ -1,0 +1,37 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+source /etc/omarchy-container.env
+
+export HOME=/home/omarchy
+export USER=omarchy
+export LOGNAME=omarchy
+export XDG_RUNTIME_DIR=/run/user/1000
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+export XDG_SESSION_TYPE=wayland
+export XDG_CURRENT_DESKTOP=Hyprland
+export XDG_SESSION_DESKTOP=Hyprland
+export OMARCHY_PATH=/usr/share/omarchy
+
+# NVIDIA/Wayland defaults. Do not force vendor-specific GL variables unless the
+# NVIDIA runtime has actually injected the driver.
+if [[ -e /dev/nvidiactl ]]; then
+  export GBM_BACKEND=nvidia-drm
+  export __GLX_VENDOR_LIBRARY_NAME=nvidia
+fi
+
+# Do not export an empty AQ_DRM_DEVICES: Aquamarine treats an explicitly-set
+# device list differently from automatic selection.
+if [[ -z "${AQ_DRM_DEVICES:-}" ]]; then
+  unset AQ_DRM_DEVICES || true
+fi
+
+mkdir -p "$HOME/.local/state/omarchy-container"
+
+echo "[$(date -Is)] starting UWSM/Hyprland" \
+  >> "$HOME/.local/state/omarchy-container/session.log"
+
+# UWSM provides the user-systemd environment Omarchy 4 expects. Hyprland 0.56+
+# has a mandatory headless Aquamarine backend and optional DRM backend.
+exec uwsm start -F -eD Hyprland -N "Omarchy Container" \
+  -C "Headless Omarchy desktop on Unraid" -- /usr/bin/Hyprland

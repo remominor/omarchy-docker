@@ -1,0 +1,13 @@
+[Unit]
+Description=Sunshine for the Omarchy headless desktop
+After=graphical-session.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/omarchy-container.env
+ExecStart=/usr/local/bin/omarchy-sunshine
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

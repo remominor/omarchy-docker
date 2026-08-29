@@ -1,0 +1,14 @@
+[Unit]
+Description=Omarchy headless Hyprland desktop
+After=default.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/omarchy-container.env
+ExecStart=/usr/local/bin/omarchy-container-session
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+
+[Install]
+WantedBy=default.target

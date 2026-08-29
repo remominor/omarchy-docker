@@ -1,0 +1,13 @@
+.DS_Store
+._*
+
+# Local configuration and runtime state
+.env
+home/
+sunshine/
+
+# Local build output
+*.log
+*.tar
+*.tar.gz
+*.tar.zst

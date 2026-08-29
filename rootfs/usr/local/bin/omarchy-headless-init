@@ -1,0 +1,57 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+source /etc/omarchy-container.env
+
+export HOME=/home/omarchy
+export XDG_RUNTIME_DIR=/run/user/1000
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+
+log="$HOME/.local/state/omarchy-container/headless-init.log"
+mkdir -p "$(dirname "$log")"
+exec >>"$log" 2>&1
+
+echo "[$(date -Is)] headless init starting"
+
+# Hyprland may already have a headless output when there is no usable DRM seat.
+# If not, create a stable, explicitly named one.
+for _ in {1..200}; do
+  if hyprctl -j version >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.1
+done
+
+if ! hyprctl -j version >/dev/null 2>&1; then
+  echo "ERROR: hyprctl never became available"
+  exit 1
+fi
+
+if ! hyprctl -j monitors all 2>/dev/null | jq -e \
+     --arg n "$OMARCHY_OUTPUT_NAME" '.[] | select(.name == $n)' >/dev/null; then
+  echo "Creating headless output: $OMARCHY_OUTPUT_NAME"
+  hyprctl output create headless "$OMARCHY_OUTPUT_NAME"
+fi
+
+echo "Configuring ${OMARCHY_OUTPUT_NAME}: ${OMARCHY_RESOLUTION}@${OMARCHY_REFRESH}, scale ${OMARCHY_SCALE}"
+hyprctl keyword monitor \
+  "${OMARCHY_OUTPUT_NAME},${OMARCHY_RESOLUTION}@${OMARCHY_REFRESH},0x0,${OMARCHY_SCALE}"
+
+# Keep the workspace on the virtual output.
+hyprctl dispatch focusmonitor "$OMARCHY_OUTPUT_NAME" || true
+hyprctl dispatch workspace 1 || true
+
+# Refresh user-manager environment so Sunshine sees this Wayland socket.
+systemctl --user import-environment \
+  WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP \
+  XDG_SESSION_TYPE XDG_SESSION_DESKTOP OMARCHY_PATH || true
+dbus-update-activation-environment --systemd \
+  WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP \
+  XDG_SESSION_TYPE XDG_SESSION_DESKTOP OMARCHY_PATH || true
+
+echo "Starting Sunshine"
+systemctl --user restart omarchy-sunshine.service
+
+echo "Current monitors:"
+hyprctl monitors all || true
+echo "[$(date -Is)] headless init complete"

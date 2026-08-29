@@ -1,0 +1,14 @@
+[Unit]
+Description=Start Omarchy container user session
+After=systemd-user-sessions.service dbus.service
+Wants=dbus.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/omarchy-start-user
+ExecStop=-/usr/bin/systemctl stop user@1000.service
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target

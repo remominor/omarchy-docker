@@ -1,0 +1,27 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+source /etc/omarchy-container.env
+
+export HOME=/home/omarchy
+export XDG_RUNTIME_DIR=/run/user/1000
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+export XDG_SESSION_TYPE=wayland
+export XDG_CURRENT_DESKTOP=Hyprland
+export XDG_SESSION_DESKTOP=Hyprland
+
+# User systemd's environment should already have WAYLAND_DISPLAY after the
+# Hyprland startup hook. Recover it from the runtime dir if it does not.
+if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+  socket="$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' \
+    -printf '%T@ %f\n' 2>/dev/null | sort -nr | awk 'NR==1{print $2}')"
+  [[ -n "$socket" ]] && export WAYLAND_DISPLAY="$socket"
+fi
+
+if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+  echo "ERROR: no Wayland socket found for Sunshine" >&2
+  exit 1
+fi
+
+echo "Starting Sunshine on ${WAYLAND_DISPLAY}, output ${OMARCHY_OUTPUT_NAME}, base port ${SUNSHINE_PORT}"
+exec /usr/bin/sunshine /config/sunshine.conf

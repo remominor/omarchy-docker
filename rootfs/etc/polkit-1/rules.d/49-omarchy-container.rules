@@ -1,0 +1,5 @@
+polkit.addRule(function(action, subject) {
+    if (subject.user == "omarchy") {
+        return polkit.Result.YES;
+    }
+});

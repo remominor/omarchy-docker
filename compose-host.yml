@@ -1,0 +1,33 @@
+services:
+  omarchy:
+    build:
+      context: .
+      args:
+        OMARCHY_CHANNEL: ${OMARCHY_CHANNEL:-stable}
+        OMARCHY_PROFILE: ${OMARCHY_PROFILE:-core}
+    image: local/omarchy-unraid:latest
+    container_name: omarchy
+    hostname: omarchy
+    restart: unless-stopped
+    runtime: nvidia
+    network_mode: host
+    privileged: true
+    shm_size: 2gb
+    environment:
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES}
+      NVIDIA_DRIVER_CAPABILITIES: all
+      OMARCHY_OUTPUT_NAME: ${OMARCHY_OUTPUT_NAME:-OMARCHY}
+      OMARCHY_RESOLUTION: ${OMARCHY_RESOLUTION:-2560x1440}
+      OMARCHY_REFRESH: ${OMARCHY_REFRESH:-60}
+      OMARCHY_SCALE: ${OMARCHY_SCALE:-1}
+      SUNSHINE_PORT: ${SUNSHINE_PORT:-48989}
+      AQ_DRM_DEVICES: ${AQ_DRM_DEVICES:-}
+    volumes:
+    - ${APPDATA_PATH:-/mnt/user/appdata/omarchy-docker}/home:/home/omarchy
+    - ${APPDATA_PATH:-/mnt/user/appdata/omarchy-docker}/sunshine:/config
+    - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    - /run/udev:/run/udev:ro
+    tmpfs:
+    - /run
+    - /run/lock
+    - /tmp
