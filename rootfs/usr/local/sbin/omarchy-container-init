@@ -39,6 +39,9 @@ if [[ ! -f /config/sunshine.conf ]]; then
 sunshine_name = Omarchy-Unraid
 capture = wlr
 encoder = nvenc
+keyboard = enabled
+mouse = enabled
+controller = enabled
 output_name = ${OMARCHY_OUTPUT_NAME:-OMARCHY}
 port = ${SUNSHINE_PORT:-47989}
 origin_web_ui_allowed = lan

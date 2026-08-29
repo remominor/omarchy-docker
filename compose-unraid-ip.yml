@@ -31,6 +31,7 @@ services:
     - ${APPDATA_PATH:-/mnt/user/appdata/omarchy-docker}/sunshine:/config
     - /sys/fs/cgroup:/sys/fs/cgroup:rw
     - /run/udev:/run/udev:ro
+    - /dev/input:/dev/input
     tmpfs:
     - /run
     - /run/lock
