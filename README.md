@@ -135,6 +135,16 @@ https://<UNRAID-IP>:48990
 
 The rest of Sunshine's port family shifts by the same +1000 offset.
 
+If Sunshine is accessed through a non-default hostname or address, add its
+complete browser origin to `.env`:
+
+```ini
+SUNSHINE_CSRF_ALLOWED_ORIGINS=https://10.50.0.51:48990
+```
+
+Multiple origins may be comma-separated. Include the protocol and port, and
+only list origins you trust.
+
 **Caveat:** Sunshine documents that custom ports may not work with every
 Moonlight client. That is why the dedicated-IP compose file is preferred.
 
