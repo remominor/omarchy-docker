@@ -94,10 +94,7 @@ RUN set -eux; \
       systemd-remount-fs.service \
       systemd-random-seed.service \
       systemd-machine-id-commit.service \
-      systemd-udevd.service \
-      systemd-udevd-control.socket \
-      systemd-udevd-kernel.socket \
-      systemd-udevd-varlink.socket || true
+      || true
 
 COPY rootfs/ /
 
