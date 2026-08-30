@@ -94,7 +94,7 @@ RUN set -eux; \
       full) \
         sed -E '/^[[:space:]]*#/d; /^[[:space:]]*$/d' \
           /usr/share/omarchy/install/omarchy-base.packages | \
-          grep -Ev '^(asdcontrol|bolt|brightnessctl|ddcutil|docker|docker-buildx|docker-compose|jack2|kernel-modules-hook|networkmanager|power-profiles-daemon|qemu-user-static-binfmt|sddm|ufw|ufw-docker)$' \
+          grep -Ev '^(asdcontrol|bolt|brightnessctl|ddcutil|docker|docker-buildx|docker-compose|kernel-modules-hook|networkmanager|power-profiles-daemon|qemu-user-static-binfmt|sddm|ufw|ufw-docker)$|(^|[[:space:]])jack2([[:space:]]|$)' \
           > /tmp/omarchy-container-full.packages; \
         pacman -S --noconfirm --needed $(cat /tmp/omarchy-container-full.packages); \
         rm -f /tmp/omarchy-container-full.packages; \
