@@ -32,11 +32,13 @@ fi
 chown -R "$uid:$gid" "$home" /config
 
 # The seat9 template mirrors Sunshine's virtual event nodes into the private
-# device namespace. Headless and bridge templates intentionally do not run
-# this polling helper; bridge gets physical input through its own evdev path.
+# device namespace. Headless also runs this discovery shim because some hosts
+# (notably Unraid with a private /run tmpfs) do not propagate udev events for
+# container-created virtual devices. It never reads or grabs host input.
 input_mode="${OMARCHY_INPUT_MODE:-seat9}"
 case "$input_mode" in
-  headless|bridge) ;;
+  headless|seat9) /usr/local/bin/omarchy-sync-input-nodes & ;;
+  bridge) ;;
   seat9) /usr/local/bin/omarchy-sync-input-nodes & ;;
   *) echo "ERROR: unsupported OMARCHY_INPUT_MODE=$input_mode" >&2; exit 2 ;;
 esac
