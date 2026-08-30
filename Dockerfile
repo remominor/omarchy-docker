@@ -15,7 +15,8 @@ ENV container=docker \
 RUN echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen && locale-gen
 
 ENV LANG=en_US.UTF-8 \
-    LC_ALL=en_US.UTF-8
+    LC_ALL=en_US.UTF-8 \
+    XDG_DATA_DIRS=/home/omarchy/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share
 
 # Use Omarchy's Arch snapshot and Omarchy package repo as one coherent package set.
 RUN set -eux; \
@@ -36,7 +37,7 @@ RUN set -eux; \
     PATH="/tmp/container-install-shims:${PATH}" pacman -Syu --noconfirm --needed \
       bash bash-completion ca-certificates curl dbus git glib2 \
       sudo shadow util-linux procps-ng iproute2 iputils jq perl \
-      systemd polkit pambase libinput evtest \
+      systemd polkit pambase libinput evtest flatpak xdg-desktop-portal \
       base-devel fakeroot pacman-contrib \
       libglvnd egl-wayland vulkan-icd-loader libva mesa-utils vulkan-tools; \
     rm -rf /tmp/container-install-shims
@@ -82,6 +83,7 @@ RUN set -eux; \
         pacman -S --noconfirm --needed \
           alsa-utils pipewire-alsa pipewire-jack pipewire-pulse \
           xdg-desktop-portal-gtk xdg-terminal-exec \
+          xdg-desktop-portal flatpak \
           foot chromium nautilus udiskie \
           wl-clipboard grim slurp socat pamixer \
           hyprpicker hyprsunset gpu-screen-recorder \
@@ -95,6 +97,7 @@ RUN set -eux; \
         pacman -S --noconfirm --needed pipewire-alsa pipewire-jack pipewire-pulse ;; \
       *) echo "Unsupported OMARCHY_PROFILE=${OMARCHY_PROFILE}; use core or full" >&2; exit 2 ;; \
     esac; \
+    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo; \
     userdel -r packagebuilder; \
     rm -rf /tmp/omarchy-container-stubs; \
     pacman -Scc --noconfirm

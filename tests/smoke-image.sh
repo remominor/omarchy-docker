@@ -11,7 +11,7 @@ set -euo pipefail
 for command in \
   Hyprland hyprctl quickshell uwsm sunshine \
   pipewire wireplumber pactl chromium foot nautilus jq systemctl \
-  evtest fake-udev; do
+  evtest fake-udev flatpak; do
   command -v "$command" >/dev/null || {
     echo "missing command: $command" >&2
     exit 1
@@ -57,7 +57,7 @@ grep -A2 -F "[omarchy]" /etc/pacman.conf | \
   grep -Fqx "SigLevel = Required DatabaseOptional"
 
 pacman -Q \
-  omarchy omarchy-settings sunshine hyprland quickshell uwsm \
+  omarchy omarchy-settings sunshine hyprland quickshell uwsm flatpak \
   pipewire wireplumber
 
 echo "image smoke checks passed"

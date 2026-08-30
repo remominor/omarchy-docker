@@ -83,15 +83,22 @@ If recurring setup becomes necessary, a future enhancement could run scripts
 from the persistent, user-owned directory
 `/home/omarchy/.config/omarchy-container/bootstrap.d/` during session startup.
 That hook should be limited to user-level configuration and installs, such as
-`~/.local` tools. Flatpak may be used as an optional fallback for applications
+`~/.local` tools. Flatpak is available as an optional fallback for applications
 not available through Omarchy's native package path, but is not required by
 Omarchy. The hook should not become a root package
 install mechanism: system packages belong in the Dockerfile/profile and the
 monthly image rebuild process.
 
-Flatpak is not currently part of the core image. If it is added later as an
-optional application path, keep user installations under the home bind mount.
-Do not add a `/proc` bind mount:
+Flatpak is available in the image. Install applications as the `omarchy` user
+so they persist in the home bind mount:
+
+```bash
+docker exec -it omarchy bash -lc \
+  'runuser -u omarchy -- flatpak --user install flathub APP_ID'
+```
+
+Do not install user applications with root `flatpak install`, and do not add a
+`/proc` bind mount:
 Docker already provides proc, and Flatpak setup must tolerate an existing proc
 mount (`mountpoint -q /proc || mount -t proc none /proc`). The `/dev/fuse`,
 `SYS_ADMIN`, and unconfined seccomp settings already present in the non-headless
