@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>omarchy-docker</Name>
-  <Repository>local/omarchy-headless:latest</Repository>
+  <Repository>ghcr.io/remominor/omarchy-docker:headless</Repository>
   <Registry>https://github.com/remominor/omarchy-docker</Registry>
   <Network>host</Network>
   <MyIP></MyIP>
@@ -18,7 +18,7 @@
   <DateInstalled />
   <DonateText />
   <DonateLink />
-  <Requires>NVIDIA Container Toolkit and a locally built local/omarchy-headless:latest image. Host networking is intentional so Sunshine retains its standard ports. Stop any other Sunshine instance using those ports, or use a dedicated custom-network IP with one of the non-headless Compose profiles. No Omarchy-specific host udev rule or host service is required.</Requires>
+  <Requires>NVIDIA Container Toolkit. This template pulls the published headless image from ghcr.io/remominor/omarchy-docker:headless. Host networking is intentional so Sunshine retains its standard ports. Stop any other Sunshine instance using those ports, or use a dedicated custom-network IP with one of the non-headless Compose profiles. No Omarchy-specific host udev rule or host service is required.</Requires>
   <Config Name="Omarchy home" Target="/home/omarchy" Default="/mnt/user/appdata/omarchy-docker/home" Mode="rw" Description="Persistent Omarchy user home." Type="Path" Display="always" Required="true" Mask="false" />
   <Config Name="Sunshine configuration" Target="/config" Default="/mnt/user/appdata/omarchy-docker/sunshine" Mode="rw" Description="Persistent Sunshine credentials, pairing state, and configuration." Type="Path" Display="always" Required="true" Mask="false" />
   <Config Name="Host cgroup" Target="/sys/fs/cgroup" Default="/sys/fs/cgroup" Mode="rw" Description="Host cgroup hierarchy required by systemd in the container." Type="Path" Display="advanced" Required="true" Mask="false" />
