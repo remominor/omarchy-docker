@@ -6,13 +6,13 @@ selects the input topology.
 
 | File | Use when | Host input requirement | Special mapping |
 |---|---|---|---|
-| `templates/compose.headless.yml` | Virtual input is sufficient | None | `/run/udev` read-only; host networking |
-| `templates/compose.bridge.yml` | Physical keyboard/mouse must be grabbed exclusively | None | `/dev/input` read-only at `/host/input` |
-| `templates/compose.seat9.yml` | Existing seat9 isolation is preferred | Install `host/72-omarchy-sunshine-seat.rules` | No host `/dev/input` mapping |
+| `compose.headless.yml` | Virtual input is sufficient | None | `/run/udev` read-only; host networking |
+| `compose.bridge.yml` | Physical keyboard/mouse must be grabbed exclusively | None | `/dev/input` read-only at `/host/input` |
+| `compose.seat9.yml` | Existing seat9 isolation is preferred | Install `host/72-omarchy-sunshine-seat.rules` | No host `/dev/input` mapping |
 
 All profiles persist `/home/omarchy` and `/config` through host bind mounts.
 Compose defaults to the repository-relative `../appdata/omarchy-docker` path
-(relative to `templates/`); set `APPDATA_PATH` in `.env` for another local path.
+(relative to the project root); set `APPDATA_PATH` in `.env` for another local path.
 The Unraid XML intentionally keeps its `/mnt/user/appdata/...` defaults.
 
 The default capability set retains `MKNOD` because the seat9 profile creates
@@ -25,9 +25,9 @@ event-node synchronization helper. The headless profile uses neither.
 Start one profile at a time:
 
 ```bash
-docker compose -f templates/compose.headless.yml up -d --build
-docker compose -f templates/compose.bridge.yml up -d --build
-docker compose -f templates/compose.seat9.yml up -d --build
+docker compose --env-file .env -f compose.headless.yml up -d --build
+docker compose --env-file .env -f compose.bridge.yml up -d --build
+docker compose --env-file .env -f compose.seat9.yml up -d --build
 ```
 
 ## Sunshine networking

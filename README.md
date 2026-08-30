@@ -64,14 +64,18 @@ Those require starting the container with NVIDIA, DRM, and uinput devices.
 
 ## Deployment templates
 
-The development branch has three selectable Compose templates documented in
-[Deployment templates](docs/templates.md):
+The project has three selectable Compose templates:
 
-- `headless` uses virtual input only and needs no host seat rule.
-- `bridge` reads `/dev/input` read-only and exclusively grabs Sunshine's
-  physical event devices through the custom Wayland bridge.
-- `seat9` uses the validated private-device path and requires the host seat9
-  udev rule.
+| Template | Input path | Host requirement |
+|---|---|---|
+| `compose.headless.yml` | Sunshine virtual input only | No host input devices or seat rule |
+| `compose.bridge.yml` | Custom Wayland bridge with exclusive evdev grabs | Read-only `/dev/input` mount |
+| `compose.seat9.yml` | Sunshine evdev nodes mirrored into private `/dev` | Host `seat9` udev rule |
+
+All templates use the same pinned CUDA-enabled Sunshine package. Choose one
+template at a time; do not run multiple templates with the default container
+name. Detailed input and persistence notes are in
+[Deployment templates](docs/templates.md).
 
 Choose one template; do not run multiple profiles with the default container
 name. For CachyOS development, create the local environment file and select a
@@ -92,7 +96,7 @@ NVIDIA_VISIBLE_DEVICES=GPU-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ```
 
 ```bash
-docker compose -f templates/compose.bridge.yml up -d --build
+docker compose --env-file .env -f compose.bridge.yml up -d --build
 docker logs -f omarchy
 ```
 
@@ -203,7 +207,7 @@ client resolution is not negotiated back to Hyprland. For a 1080p client, use
 Apply changes by recreating the container, for example:
 
 ```bash
-OMARCHY_RESOLUTION=1920x1080 docker compose -f templates/compose.bridge.yml up -d
+OMARCHY_RESOLUTION=1920x1080 docker compose --env-file .env -f compose.bridge.yml up -d
 ```
 
 The Omarchy display utility can also write a monitor rule to

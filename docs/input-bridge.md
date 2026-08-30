@@ -77,4 +77,4 @@ dependency.
 
 The `seat9-input` branch remains the rollback/reference implementation. The
 bridge and seat9 profiles coexist in the shared image; selecting
-`templates/compose.bridge.yml` activates the bridge path.
+`compose.bridge.yml` activates the bridge path.
