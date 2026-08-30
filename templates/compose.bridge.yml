@@ -11,6 +11,8 @@ services:
     restart: unless-stopped
     runtime: nvidia
     cgroup: host
+    # MKNOD is retained in the shared default image for the seat9 template's
+    # private Sunshine event-node sync. The bridge itself does not create nodes.
     cap_add: [NET_RAW, NET_ADMIN, SYS_ADMIN, SYS_NICE, IPC_LOCK, MKNOD, SYS_TTY_CONFIG]
     security_opt: [seccomp=unconfined]
     ulimits: {memlock: -1, rtprio: 95}

@@ -12,6 +12,11 @@ selects the input topology.
 
 All profiles persist `/home/omarchy` and `/config` through host bind mounts. Set
 `APPDATA_PATH` in `.env` before starting.
+
+The default capability set retains `MKNOD` because the seat9 profile creates
+private event nodes with `omarchy-sync-input-nodes`. The bridge and headless
+profiles do not use `MKNOD`; it can be removed in a deployment that never uses
+seat9, but is left enabled by default so the shared image remains selectable.
 Only the bridge profile reads host event nodes. Only seat9 runs the virtual
 event-node synchronization helper. The headless profile uses neither.
 

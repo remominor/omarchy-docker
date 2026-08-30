@@ -17,6 +17,8 @@ services:
     - SYS_ADMIN
     - SYS_NICE
     - IPC_LOCK
+    # Required by the seat9 virtual event-node synchronizer; bridge/headless
+    # deployments can remove it when those modes are the only profiles used.
     - MKNOD
     - SYS_TTY_CONFIG
     security_opt:
