@@ -34,7 +34,7 @@ rm -f "$ready_file"
 wayland_display=
 for _ in {1..900}; do
   wayland_display="$(find "$runtime" -maxdepth 1 -type s -name 'wayland-*' \
-    -printf '%T@ %f\n' 2>/dev/null | sort -nr | awk 'NR==1{print $2}')"
+    -printf '%T@ %f\n' 2>/dev/null | sort -nr | awk 'NR==1{print $2}' || true)"
   [[ -n "$wayland_display" ]] && break
   sleep 0.1
 done
