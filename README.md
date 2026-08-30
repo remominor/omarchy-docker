@@ -268,12 +268,7 @@ The Compose templates and Unraid XML template persist:
 ```text
 /mnt/user/appdata/omarchy-docker/home      -> /home/omarchy
 /mnt/user/appdata/omarchy-docker/sunshine  -> /config
-/mnt/user/appdata/omarchy-docker/games     -> /mnt/games
 ```
-
-Set `GAMES_PATH` (Compose) or the **Games and applications** path (Unraid) to
-an array/share location when appropriate. This is an explicit application
-library mount, not a Docker-managed volume, so it survives image replacement.
 
 The image copies Omarchy's `/etc/skel` defaults into an empty persistent home
 on first boot. Existing files are not overwritten. Per-user application data

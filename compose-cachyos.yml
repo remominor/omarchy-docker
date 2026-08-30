@@ -55,7 +55,6 @@ services:
     volumes:
     - ${APPDATA_PATH:-/mnt/user/appdata/omarchy-docker}/home:/home/omarchy
     - ${APPDATA_PATH:-/mnt/user/appdata/omarchy-docker}/sunshine:/config
-    - ${GAMES_PATH:-/mnt/user/appdata/omarchy-docker/games}:/mnt/games
     - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs:
     - /run
