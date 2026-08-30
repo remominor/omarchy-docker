@@ -38,6 +38,7 @@ services:
       OMARCHY_REFRESH: ${OMARCHY_REFRESH:-60}
       OMARCHY_SCALE: ${OMARCHY_SCALE:-1}
       SUNSHINE_PORT: ${SUNSHINE_PORT:-47989}
+      SUNSHINE_CSRF_ALLOWED_ORIGINS: ${SUNSHINE_CSRF_ALLOWED_ORIGINS:-}
     volumes:
       - ${APPDATA_PATH:-../appdata/omarchy-docker}/home:/home/omarchy
       - ${APPDATA_PATH:-../appdata/omarchy-docker}/sunshine:/config
