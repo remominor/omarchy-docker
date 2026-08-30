@@ -39,6 +39,11 @@ mount (`mountpoint -q /proc || mount -t proc none /proc`). The `/dev/fuse`,
 `SYS_ADMIN`, and unconfined seccomp settings already present in the non-headless
 profiles are the relevant prerequisites.
 
+This persistence layout follows the practical split used by
+[docker-steam-headless](https://github.com/remominor/docker-steam-headless):
+keep user/application state in the home mount and place large libraries on a
+separate host path.
+
 Monthly Omarchy releases should produce a new image from `main`; live CVE
 patches can be installed for testing, then incorporated into the next image
 rebuild. The `main` workflow publishes the headless image as both `latest` and
