@@ -46,7 +46,7 @@ services:
       - ${APPDATA_PATH:-./appdata/omarchy-docker}/sunshine:/config
       - /dev/input:/host/input:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
-    tmpfs: [/run, /run/lock, /tmp]
+    tmpfs: [/run, /run/lock, /tmp:exec]
     healthcheck:
       test: ["CMD-SHELL", "test -f /run/omarchy-input-bridge/ready && runuser -u omarchy -- env XDG_RUNTIME_DIR=/run/user/1000 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus systemctl --user is-active --quiet omarchy-sunshine.service"]
       interval: 30s
