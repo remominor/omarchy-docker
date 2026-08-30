@@ -41,6 +41,11 @@ RUN set -eux; \
       libglvnd egl-wayland vulkan-icd-loader libva mesa-utils vulkan-tools; \
     rm -rf /tmp/container-install-shims
 
+# Build the optional bridge binary once; the compose template selects whether
+# it is used at runtime.
+RUN set -eux; \
+    pacman -S --noconfirm --needed wayland libxkbcommon
+
 # Install the statically linked Games-on-Whales fake-udev emitter from a
 # pinned revision. It publishes synthetic GROUP_UDEV events inside the
 # container network namespace after private input nodes are materialized.
@@ -125,6 +130,11 @@ RUN set -eux; \
       || true
 
 COPY rootfs/ /
+COPY src/input-bridge/ /tmp/omarchy-input-bridge/
+
+RUN set -eux; \
+    make -C /tmp/omarchy-input-bridge install; \
+    rm -rf /tmp/omarchy-input-bridge
 
 RUN set -eux; \
     chmod 0755 \
@@ -135,6 +145,8 @@ RUN set -eux; \
       /usr/local/bin/omarchy-container-check \
       /usr/local/bin/omarchy-audio-init \
       /usr/local/sbin/omarchy-container-init \
+      /usr/local/sbin/omarchy-input-bridge-service \
+      /usr/local/sbin/omarchy-input-bridge-failsafe \
       /usr/local/sbin/omarchy-start-user; \
     chmod 0750 /etc/sudoers.d; \
     chmod 0440 /etc/sudoers.d/omarchy-container; \

@@ -1,0 +1,42 @@
+services:
+  omarchy:
+    build:
+      context: ..
+      args:
+        OMARCHY_CHANNEL: ${OMARCHY_CHANNEL:-stable}
+        OMARCHY_PROFILE: ${OMARCHY_PROFILE:-core}
+    image: local/omarchy-bridge:latest
+    container_name: omarchy
+    hostname: omarchy
+    restart: unless-stopped
+    runtime: nvidia
+    cgroup: host
+    cap_add: [NET_RAW, NET_ADMIN, SYS_ADMIN, SYS_NICE, IPC_LOCK, MKNOD, SYS_TTY_CONFIG]
+    security_opt: [seccomp=unconfined]
+    ulimits: {memlock: -1, rtprio: 95}
+    devices:
+      - /dev/uinput:/dev/uinput
+      - /dev/dri:/dev/dri
+      - /dev/fuse:/dev/fuse
+    device_cgroup_rules: ["c 13:* rmw"]
+    shm_size: 2gb
+    ports: ["47984-47990:47984-47990/tcp", "48010:48010/tcp", "47998-48000:47998-48000/udp"]
+    environment:
+      OMARCHY_INPUT_MODE: bridge
+      OMARCHY_INPUT_LAYOUT: ${OMARCHY_INPUT_LAYOUT:-us}
+      SUNSHINE_SEAT: ${SUNSHINE_SEAT:-seat9}
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      NVIDIA_DRIVER_CAPABILITIES: all
+      WLR_RENDERER: ${WLR_RENDERER:-gles2}
+      WLR_LIBINPUT_NO_DEVICES: ${WLR_LIBINPUT_NO_DEVICES:-1}
+      OMARCHY_OUTPUT_NAME: ${OMARCHY_OUTPUT_NAME:-OMARCHY}
+      OMARCHY_RESOLUTION: ${OMARCHY_RESOLUTION:-2560x1440}
+      OMARCHY_REFRESH: ${OMARCHY_REFRESH:-60}
+      OMARCHY_SCALE: ${OMARCHY_SCALE:-1}
+      SUNSHINE_PORT: ${SUNSHINE_PORT:-47989}
+    volumes:
+      - ${APPDATA_PATH:-/mnt/user/appdata/omarchy-docker}/home:/home/omarchy
+      - ${APPDATA_PATH:-/mnt/user/appdata/omarchy-docker}/sunshine:/config
+      - /dev/input:/host/input:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs: [/run, /run/lock, /tmp]

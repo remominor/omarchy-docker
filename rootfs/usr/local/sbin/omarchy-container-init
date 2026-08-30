@@ -31,10 +31,15 @@ if [[ ! -e "$home/.omarchy-container-seeded" ]]; then
 fi
 chown -R "$uid:$gid" "$home" /config
 
-# Sunshine creates virtual input event nodes after the compositor starts.
-# Docker does not automatically materialize those nodes in the container's
-# private /dev, so keep them synchronized from the host sysfs tree.
-/usr/local/bin/omarchy-sync-input-nodes &
+# The seat9 template mirrors Sunshine's virtual event nodes into the private
+# device namespace. Headless and bridge templates intentionally do not run
+# this polling helper; bridge gets physical input through its own evdev path.
+input_mode="${OMARCHY_INPUT_MODE:-seat9}"
+case "$input_mode" in
+  headless|bridge) ;;
+  seat9) /usr/local/bin/omarchy-sync-input-nodes & ;;
+  *) echo "ERROR: unsupported OMARCHY_INPUT_MODE=$input_mode" >&2; exit 2 ;;
+esac
 
 # Persist Docker-provided settings for both the system manager and user manager.
 cat > /etc/omarchy-container.env <<EOF
@@ -43,6 +48,7 @@ OMARCHY_OUTPUT_NAME=${OMARCHY_OUTPUT_NAME:-OMARCHY}
 OMARCHY_RESOLUTION=${OMARCHY_RESOLUTION:-2560x1440}
 OMARCHY_REFRESH=${OMARCHY_REFRESH:-60}
 OMARCHY_SCALE=${OMARCHY_SCALE:-1}
+OMARCHY_INPUT_MODE=${OMARCHY_INPUT_MODE:-seat9}
 SUNSHINE_PORT=${SUNSHINE_PORT:-47989}
 SUNSHINE_SEAT=${SUNSHINE_SEAT:-seat9}
 SUNSHINE_CSRF_ALLOWED_ORIGINS=${SUNSHINE_CSRF_ALLOWED_ORIGINS:-}

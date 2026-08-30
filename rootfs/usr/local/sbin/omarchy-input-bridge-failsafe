@@ -1,0 +1,10 @@
+#!/usr/bin/bash
+set -u
+
+rm -f /run/omarchy-input-bridge/ready
+runtime=/run/user/1000
+[[ -S "${runtime}/bus" ]] || exit 0
+runuser -u omarchy -- env \
+  XDG_RUNTIME_DIR="$runtime" \
+  DBUS_SESSION_BUS_ADDRESS="unix:path=${runtime}/bus" \
+  systemctl --user stop omarchy-sunshine.service || true

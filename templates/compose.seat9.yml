@@ -1,0 +1,13 @@
+services:
+  omarchy:
+    extends:
+      file: ../compose-cachyos.yml
+      service: omarchy
+    build:
+      context: ..
+      args:
+        OMARCHY_CHANNEL: ${OMARCHY_CHANNEL:-stable}
+        OMARCHY_PROFILE: ${OMARCHY_PROFILE:-core}
+    image: local/omarchy-seat9:latest
+    environment:
+      OMARCHY_INPUT_MODE: seat9

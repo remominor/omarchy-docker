@@ -1,0 +1,81 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+source /etc/omarchy-container.env
+
+runtime=/run/user/1000
+user_bus="unix:path=${runtime}/bus"
+state_dir=/run/omarchy-input-bridge
+ready_file=${state_dir}/ready
+bridge_pid=
+
+stop_sunshine() {
+  [[ -S "${runtime}/bus" ]] || return 0
+  runuser -u omarchy -- env \
+    XDG_RUNTIME_DIR="$runtime" \
+    DBUS_SESSION_BUS_ADDRESS="$user_bus" \
+    systemctl --user stop omarchy-sunshine.service || true
+}
+
+cleanup() {
+  rm -f "$ready_file"
+  stop_sunshine
+  if [[ -n "$bridge_pid" ]] && kill -0 "$bridge_pid" 2>/dev/null; then
+    kill -TERM "$bridge_pid" 2>/dev/null || true
+    wait "$bridge_pid" 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT
+trap 'exit 0' INT TERM
+
+install -d -m 0755 "$state_dir"
+rm -f "$ready_file"
+
+wayland_display=
+for _ in {1..900}; do
+  wayland_display="$(find "$runtime" -maxdepth 1 -type s -name 'wayland-*' \
+    -printf '%T@ %f\n' 2>/dev/null | sort -nr | awk 'NR==1{print $2}')"
+  [[ -n "$wayland_display" ]] && break
+  sleep 0.1
+done
+if [[ -z "$wayland_display" ]]; then
+  echo "ERROR: no Wayland socket appeared for the input bridge" >&2
+  exit 1
+fi
+
+env \
+  HOME=/home/omarchy \
+  XDG_RUNTIME_DIR="$runtime" \
+  WAYLAND_DISPLAY="$wayland_display" \
+  /usr/local/bin/omarchy-input-bridge \
+    --forward \
+    --input-root /host/input \
+    --seat "${SUNSHINE_SEAT:-seat9}" \
+    --layout "${OMARCHY_INPUT_LAYOUT:-us}" \
+    --ready-file "$ready_file" &
+bridge_pid=$!
+
+for _ in {1..300}; do
+  [[ -f "$ready_file" ]] && break
+  kill -0 "$bridge_pid" 2>/dev/null || {
+    wait "$bridge_pid"
+    exit $?
+  }
+  sleep 0.1
+done
+if [[ ! -f "$ready_file" ]]; then
+  echo "ERROR: input bridge did not become ready" >&2
+  exit 1
+fi
+
+runuser -u omarchy -- env \
+  XDG_RUNTIME_DIR="$runtime" \
+  DBUS_SESSION_BUS_ADDRESS="$user_bus" \
+  systemctl --user restart omarchy-sunshine.service
+
+set +e
+wait "$bridge_pid"
+bridge_result=$?
+set -e
+bridge_pid=
+exit "$bridge_result"

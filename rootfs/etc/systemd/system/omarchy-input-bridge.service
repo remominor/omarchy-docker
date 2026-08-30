@@ -1,0 +1,15 @@
+[Unit]
+Description=Exclusive Sunshine evdev to Hyprland input bridge
+After=omarchy-user.service
+Requires=omarchy-user.service
+PartOf=omarchy-user.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/omarchy-container.env
+ExecStart=/usr/local/sbin/omarchy-input-bridge-service
+ExecStopPost=/usr/local/sbin/omarchy-input-bridge-failsafe
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=10
