@@ -4,6 +4,8 @@ ARG OMARCHY_CHANNEL=stable
 ARG OMARCHY_PROFILE=core
 ARG FAKE_UDEV_COMMIT=903a070b9eee733e146dfe03dc18173caf9eb010
 ARG FAKE_UDEV_SHA256=69368c27a7b996e3e086f1a96d8a9f3ef19c2fdaf5b5ace9ea6b7f34b45f4681
+ARG SUNSHINE_VERSION=2026.516.143833
+ARG SUNSHINE_SHA256=676539cfb079f81f38e7001b85d72c39cd5bf25abe0956bab4577cb25afc5299
 
 ENV container=docker \
     OMARCHY_PATH=/usr/share/omarchy
@@ -36,8 +38,7 @@ RUN set -eux; \
       sudo shadow util-linux procps-ng iproute2 iputils jq perl \
       systemd polkit pambase libinput evtest \
       base-devel fakeroot pacman-contrib \
-      libglvnd egl-wayland vulkan-icd-loader libva mesa-utils vulkan-tools \
-      sunshine; \
+      libglvnd egl-wayland vulkan-icd-loader libva mesa-utils vulkan-tools; \
     rm -rf /tmp/container-install-shims
 
 # Install the statically linked Games-on-Whales fake-udev emitter from a
@@ -92,6 +93,18 @@ RUN set -eux; \
     userdel -r packagebuilder; \
     rm -rf /tmp/omarchy-container-stubs; \
     pacman -Scc --noconfirm
+
+# Omarchy's current Sunshine build omits the CUDA wlroots-to-NVENC path.
+# Install LizardByte's matching Arch release instead, with an immutable URL
+# and verified digest, so NVIDIA containers retain hardware encoding.
+RUN set -eux; \
+    sunshine_package="sunshine-${SUNSHINE_VERSION}-1-x86_64.pkg.tar.zst"; \
+    curl -fsSL \
+      "https://github.com/LizardByte/Sunshine/releases/download/v${SUNSHINE_VERSION}/${sunshine_package}" \
+      -o "/tmp/${sunshine_package}"; \
+    printf '%s  %s\n' "${SUNSHINE_SHA256}" "/tmp/${sunshine_package}" | sha256sum -c -; \
+    pacman -U --noconfirm "/tmp/${sunshine_package}"; \
+    rm -f "/tmp/${sunshine_package}"
 
 RUN set -eux; \
     useradd -m -u 1000 -G wheel,audio,video,input,seat -s /bin/bash omarchy; \
