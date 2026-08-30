@@ -1,6 +1,6 @@
 # Omarchy Docker roadmap
 
-This project is an Arch-based, headless Omarchy desktop for Unraid. Its first
+This project is an Arch-based, headless Omarchy desktop. Its first
 goal is a reliable Moonlight desktop through Sunshine, not feature parity with
 a full Omarchy machine or a general-purpose gaming container.
 
@@ -46,10 +46,13 @@ and compositor implementation should not be copied into this image.
 
 ### 1. Reproducible image
 
-- Build the `core` profile from a clean cache.
+- Build the `core` profile from a clean cache (the local bridge rebuild is
+  currently validated; CI remains the clean-build gate).
 - Confirm the Omarchy stable repository and Arch snapshot remain coherent.
 - Add an image-level smoke test for required commands, service units, and
   seeded configuration.
+- Keep `core` and `full` profile builds available; use `core` for the default
+  headless image and `full` for broader Omarchy software testing.
 
 ### 2. Dedicated-GPU compositor proof
 
@@ -73,6 +76,8 @@ and compositor implementation should not be copied into this image.
   reaching the CachyOS KDE host, including while an RDP session remains
   active. Both Sunshine mouse devices are attached to Hyprland.
 - Controller input remains to be verified.
+- The bridge input path is the default development path; seat9 remains an
+  alternative template for hosts that already use the seat rule.
 - Only after the dedicated-GPU path passes, test coexistence and then optional
   same-GPU sharing with `steam-wayland`.
 
@@ -94,19 +99,23 @@ and compositor implementation should not be copied into this image.
   user-managed configuration.
 - Publish the validated Unraid XML through Community Applications after the
   image distribution path is stable.
+- Keep Flatpak enabled with per-user installation under the persistent home
+  mapping; rebuild monthly to refresh the base image and security updates.
+- Preserve the virtual-output monitor fallback while reading user scaling from
+  `monitors.lua`, so physical connector rediscovery cannot steal workspaces.
 
 ## First-pass acceptance checklist
 
-- [ ] Clean `core` image build succeeds.
-- [ ] Container reaches a healthy systemd state.
-- [ ] NVIDIA EGL and Vulkan use the selected GPU rather than llvmpipe.
-- [ ] Named Hyprland headless output is active at scale 1.
-- [ ] Omarchy desktop is visible before a streaming client connects.
-- [ ] Sunshine captures through Wayland and initializes NVENC.
+- [x] Clean `core` image build succeeds.
+- [x] Container reaches a healthy systemd state.
+- [x] NVIDIA EGL and Vulkan use the selected GPU rather than llvmpipe.
+- [x] Named Hyprland headless output is active at the configured mode.
+- [x] Omarchy desktop is visible before a streaming client connects.
+- [x] Sunshine captures through Wayland and initializes NVENC.
 - [x] Moonlight video, keyboard, and mouse work.
 - [ ] Moonlight audio works through `omarchy_stream.monitor`.
 - [ ] Moonlight controller input works.
-- [ ] Persistent home and Sunshine credentials survive recreation.
+- [x] Persistent home and Sunshine credentials survive recreation.
 - [x] CachyOS bridge Compose and dedicated-IP Unraid XML deployment modes are
       documented separately.
 - [ ] Same-GPU coexistence is tested only after the independent path passes.
