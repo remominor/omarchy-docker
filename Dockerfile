@@ -106,6 +106,11 @@ RUN set -eux; \
     rm -rf /tmp/omarchy-container-stubs; \
     pacman -Scc --noconfirm
 
+# Keep the user-selectable terminal editors available in every profile. The
+# full Omarchy manifest does not currently include nano, even though the
+# Omarchy editor launcher supports it.
+RUN pacman -S --noconfirm --needed nano less
+
 # Omarchy's current Sunshine build omits the CUDA wlroots-to-NVENC path.
 # Install LizardByte's matching Arch release instead, with an immutable URL
 # and verified digest, so NVIDIA containers retain hardware encoding.
