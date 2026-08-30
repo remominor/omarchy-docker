@@ -71,10 +71,11 @@ profile. It is intentionally manual and is not a bridge acceptance gate.
 ## Persistence and updates
 
 The home bind mount is the durable location for user configuration and
-per-user application installs such as Flatpak. Package-manager changes made
-with `pacman` modify the writable container layer and are lost on recreation;
-bake those changes into a rebuild or use a per-user installer under
-`/home/omarchy` when available.
+per-user application data. Omarchy's preferred software path remains its
+native Arch/Omarchy packages (and AUR where appropriate); package-manager
+changes made with `pacman` modify the writable container layer and are lost on
+recreation, so bake those changes into a rebuild. Use a per-user installer
+under `/home/omarchy` when an application supports it.
 
 ### Future user bootstrap hook
 
@@ -82,12 +83,15 @@ If recurring setup becomes necessary, a future enhancement could run scripts
 from the persistent, user-owned directory
 `/home/omarchy/.config/omarchy-container/bootstrap.d/` during session startup.
 That hook should be limited to user-level configuration and installs, such as
-`~/.local` tools or per-user Flatpaks. It should not become a root package
+`~/.local` tools. Flatpak may be used as an optional fallback for applications
+not available through Omarchy's native package path, but is not required by
+Omarchy. The hook should not become a root package
 install mechanism: system packages belong in the Dockerfile/profile and the
 monthly image rebuild process.
 
-Flatpak is not currently part of the core image. If it is added later, keep
-user installations under the home bind mount. Do not add a `/proc` bind mount:
+Flatpak is not currently part of the core image. If it is added later as an
+optional application path, keep user installations under the home bind mount.
+Do not add a `/proc` bind mount:
 Docker already provides proc, and Flatpak setup must tolerate an existing proc
 mount (`mountpoint -q /proc || mount -t proc none /proc`). The `/dev/fuse`,
 `SYS_ADMIN`, and unconfined seccomp settings already present in the non-headless
