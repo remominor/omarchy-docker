@@ -1,0 +1,20 @@
+#!/bin/bash
+set -euo pipefail
+
+# Keep Omarchy's normal refresh behavior, then restore the container policy as
+# the final module so setup changes cannot remove it.
+omarchy-refresh-config hypr/.luarc.json
+omarchy-refresh-config hypr/autostart.lua
+omarchy-refresh-config hypr/bindings.lua
+omarchy-refresh-config hypr/input.lua
+omarchy-refresh-config hypr/looknfeel.lua
+omarchy-refresh-config hypr/hyprland.lua
+omarchy-refresh-config hypr/monitors.lua
+
+mkdir -p ~/.local/state/omarchy/toggles/hypr
+cp "$OMARCHY_PATH/default/hypr/toggles/flags.lua" ~/.local/state/omarchy/toggles/hypr/
+
+hypr_config="$HOME/.config/hypr/hyprland.lua"
+if [[ -f "$hypr_config" ]] && ! grep -Fq 'omarchy-container.hypr.container' "$hypr_config"; then
+  printf '\nrequire("omarchy-container.hypr.container")\n' >>"$hypr_config"
+fi
