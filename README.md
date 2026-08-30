@@ -197,6 +197,21 @@ OMARCHY_SCALE=1
 Hyprland supports named headless outputs and explicitly documents them for
 VNC/RDP/Sunshine use.
 
+These values describe the compositor output captured by Sunshine; Moonlight's
+client resolution is not negotiated back to Hyprland. For a 1080p client, use
+`OMARCHY_RESOLUTION=1920x1080` (or keep 2560x1440 and adjust `OMARCHY_SCALE`).
+Apply changes by recreating the container, for example:
+
+```bash
+OMARCHY_RESOLUTION=1920x1080 docker compose -f templates/compose.bridge.yml up -d
+```
+
+The Omarchy display utility can also write a monitor rule to
+`~/.config/hypr/monitors.lua`; that user rule may change scale after startup.
+The display utility may continue listing disabled HDMI/DP connectors because
+the GPU DRM device remains available for rendering. They are disabled outputs,
+not additional active Sunshine displays.
+
 ## GPU / DRM selection
 
 Do not set `AQ_DRM_DEVICES` initially.
