@@ -116,7 +116,7 @@ Build the image on Unraid before adding the template:
 docker build \
   --build-arg OMARCHY_CHANNEL=stable \
   --build-arg OMARCHY_PROFILE=core \
-  -t local/omarchy-unraid:latest .
+  -t local/omarchy-headless:latest .
 ```
 
 Copy the XML into Unraid's user-template directory if it is not being installed
@@ -127,27 +127,21 @@ cp unraid/omarchy-docker.xml \
   /boot/config/plugins/dockerMan/templates-user/my-omarchy-docker.xml
 ```
 
-The XML defaults to `br0` and an example dedicated IP. In DockerMan, select an
-appropriate custom network and replace the example with an unused IP on that
-network. A dedicated IP lets Omarchy use Sunshine's standard ports while a
-normal host Sunshine instance uses the Unraid host IP.
+The XML follows the simple headless profile: it uses host networking and
+privileged mode, so no input rule or device-by-device mapping is required.
+Stop any other Sunshine instance using the host's standard ports before
+starting it. If host Sunshine must remain active, use one of the non-headless
+Compose profiles on a custom network with a dedicated IP instead.
 
 The template's **Overview**, **Requires**, and individual field descriptions
 document the complete runtime contract. In particular:
 
-- load `uinput` and install the narrow seat9 host rule persistently through
-  `/boot/config/go`;
-- keep `Privileged` disabled;
-- retain the NVIDIA runtime, listed capabilities, cgroup options, ulimits,
-  tmpfs mounts, and input cgroup rule from `ExtraParams`;
-- map `/dev/dri`, `/dev/uinput`, `/dev/fuse`, `/dev/tty0`, and `/dev/tty1`;
-- do not map host `/dev/input`, `/run/udev`, or `/sys/class/input`;
-- keep a private/custom network namespace rather than host networking.
+- use the NVIDIA runtime, cgroup mount, and tmpfs mounts from `ExtraParams`;
+- persist only the Omarchy home and Sunshine configuration paths;
+- keep standard Sunshine ports because Moonlight clients may not support
+  arbitrary remapped ports.
 
-See [Input isolation](docs/input-isolation.md) for the persistent Unraid host
-rule commands and verification sequence.
-
-Sunshine uses its normal base port 47989 on the dedicated IP. Its web UI is:
+Sunshine uses its normal base port 47989 on the host network. Its web UI is:
 
 ```text
 https://<DEDICATED-IP>:47990
@@ -156,11 +150,9 @@ https://<DEDICATED-IP>:47990
 Create the Sunshine web UI account, pair Moonlight, then launch **Omarchy
 Desktop**.
 
-This configuration was validated with CachyOS KDE and an RDP session still
-active. Moonlight keyboard, pointer motion, and clicks reached Omarchy without
-controlling the host desktop after the seat rule was installed and the
-container was restarted. Both Sunshine mouse devices were attached to
-Hyprland.
+The headless profile is intended for a host where those ports are available.
+For host-desktop input isolation without host changes, use the bridge profile;
+for the seat-based fallback, use the seat9 profile and its input guide.
 
 If Sunshine is accessed through a non-default hostname or address, add its
 complete browser origin to `.env` on CachyOS or the XML variable on Unraid:

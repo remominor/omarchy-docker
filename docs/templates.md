@@ -46,6 +46,28 @@ Nautilus, clipboard, screenshots, audio, suspend/reconnect behavior, and
 Sunshine's NVENC stream. Use `omarchy-container-check` before and after each
 change so rendering, user services, audio, and input failures stay distinct.
 
+## Follow-up feature checklist
+
+Use this checklist after monthly image rebuilds or when changing the desktop
+profile. It is intentionally manual and is not a bridge acceptance gate.
+
+- [ ] Start each selected profile and confirm its health status becomes
+  `healthy`.
+- [ ] Confirm the named Hyprland output has the requested resolution, refresh,
+  and scale.
+- [ ] Open Quickshell panels, Foot, Chromium, and Nautilus through Moonlight.
+- [ ] Verify clipboard copy/paste, screenshots, notifications, and file dialogs.
+- [ ] Verify PipeWire audio reaches Sunshine and survives a reconnect.
+- [ ] Confirm Sunshine reports NVENC rather than software encoding.
+- [ ] Reconnect Moonlight repeatedly and check for stale sessions or stuck
+  keyboard/pointer buttons.
+- [ ] For `bridge`, run `omarchy-container-check` and confirm `/host/input` is
+  read-only and bridge readiness is published.
+- [ ] For `seat9`, verify the host rule is installed and host input remains
+  isolated.
+- [ ] Exercise additional Omarchy applications included by the `full` profile
+  before promoting the rebuilt image.
+
 ## Persistence and updates
 
 The home bind mount is the durable location for user configuration and

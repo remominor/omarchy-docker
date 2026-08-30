@@ -31,3 +31,9 @@ services:
       - /run/udev:/run/udev:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs: [/run, /run/lock, /tmp]
+    healthcheck:
+      test: ["CMD-SHELL", "runuser -u omarchy -- env XDG_RUNTIME_DIR=/run/user/1000 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus systemctl --user is-active --quiet omarchy-sunshine.service"]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 3

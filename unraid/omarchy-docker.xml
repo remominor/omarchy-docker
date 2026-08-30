@@ -1,36 +1,30 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>omarchy-docker</Name>
-  <Repository>local/omarchy-unraid:latest</Repository>
+  <Repository>local/omarchy-headless:latest</Repository>
   <Registry>https://github.com/remominor/omarchy-docker</Registry>
-  <Network>br0</Network>
-  <MyIP>192.168.1.250</MyIP>
-  <Privileged>false</Privileged>
+  <Network>host</Network>
+  <MyIP></MyIP>
+  <Privileged>true</Privileged>
   <Support>https://github.com/remominor/omarchy-docker/issues</Support>
   <Project>https://github.com/remominor/omarchy-docker</Project>
-  <Overview>Headless Omarchy/Hyprland desktop streamed through Sunshine and Moonlight. REQUIRED INPUT SETUP: before starting this container, persist host/72-omarchy-sunshine-seat.rules on the Unraid boot device and install it into /etc/udev/rules.d from /boot/config/go; see the Requires field and project documentation. The container Sunshine process alone uses seat9. The narrowly matched host rule keeps its suffixed virtual devices away from the host seat, while the container private fake-udev view presents them to Hyprland as seat0. Normal unsuffixed host Sunshine devices remain unaffected. Use a custom Docker network with a dedicated IP; do not use host networking and do not add /dev/input, /run/udev, or /sys/class/input mounts.</Overview>
+  <Overview>Headless Omarchy/Hyprland desktop streamed through Sunshine and Moonlight. This Unraid template follows the simple headless profile: privileged mode and host networking provide the virtual desktop and standard Sunshine ports without a host seat rule or input bridge. Use this profile when the Unraid host does not need another Sunshine instance on the same IP. For non-privileged bridge or seat9 isolation, use the corresponding Compose template.</Overview>
   <Category>Productivity:</Category>
   <WebUI>https://[IP]:47990</WebUI>
   <Shell>bash</Shell>
-  <ExtraParams>--runtime=nvidia --cgroupns=host --cap-add=NET_RAW --cap-add=NET_ADMIN --cap-add=SYS_ADMIN --cap-add=SYS_NICE --cap-add=IPC_LOCK --cap-add=MKNOD --cap-add=SYS_TTY_CONFIG --security-opt seccomp=unconfined --pids-limit=2048 --shm-size=2g --ulimit memlock=-1 --ulimit rtprio=95 --device-cgroup-rule='c 13:* rmw' --tmpfs /run --tmpfs /run/lock --tmpfs /tmp</ExtraParams>
+  <ExtraParams>--runtime=nvidia --cgroupns=host --shm-size=2g --tmpfs /run --tmpfs /run/lock --tmpfs /tmp</ExtraParams>
   <PostArgs />
   <CPUset />
   <DateInstalled />
   <DonateText />
   <DonateLink />
-  <Requires>NVIDIA Container Toolkit and a locally built local/omarchy-unraid:latest image. Select a custom Docker network such as br0 and assign a dedicated unused IP; standard Sunshine ports are used directly on that IP. INPUT ISOLATION IS A HOST PREREQUISITE: copy host/72-omarchy-sunshine-seat.rules to /boot/config/omarchy-docker/, then add `modprobe uinput`, `install -m 0644 /boot/config/omarchy-docker/72-omarchy-sunshine-seat.rules /etc/udev/rules.d/72-omarchy-sunshine-seat.rules`, and `udevadm control --reload-rules` to /boot/config/go. Run all three commands once for the current boot, verify /dev/uinput exists, then recreate/restart this container. Unraid's /etc and loaded-module state are recreated at boot. Do not modify the host Sunshine service or global XDG_SEAT. Do not map host /dev/input, /run/udev, or /sys/class/input.</Requires>
+  <Requires>NVIDIA Container Toolkit and a locally built local/omarchy-headless:latest image. Host networking is intentional so Sunshine retains its standard ports. Stop any other Sunshine instance using those ports, or use a dedicated custom-network IP with one of the non-headless Compose profiles. No Omarchy-specific host udev rule or host service is required.</Requires>
   <Config Name="Omarchy home" Target="/home/omarchy" Default="/mnt/user/appdata/omarchy-docker/home" Mode="rw" Description="Persistent Omarchy user home." Type="Path" Display="always" Required="true" Mask="false" />
   <Config Name="Sunshine configuration" Target="/config" Default="/mnt/user/appdata/omarchy-docker/sunshine" Mode="rw" Description="Persistent Sunshine credentials, pairing state, and configuration." Type="Path" Display="always" Required="true" Mask="false" />
   <Config Name="Host cgroup" Target="/sys/fs/cgroup" Default="/sys/fs/cgroup" Mode="rw" Description="Host cgroup hierarchy required by systemd in the container." Type="Path" Display="advanced" Required="true" Mask="false" />
-  <Config Name="DRI devices" Target="/dev/dri" Default="/dev/dri" Mode="rw" Description="DRM render and display devices." Type="Device" Display="always" Required="true" Mask="false" />
-  <Config Name="uinput" Target="/dev/uinput" Default="/dev/uinput" Mode="rw" Description="Sunshine creates its seat9 virtual keyboard and mouse through uinput." Type="Device" Display="always" Required="true" Mask="false" />
-  <Config Name="FUSE" Target="/dev/fuse" Default="/dev/fuse" Mode="rw" Description="FUSE device required by the desktop runtime." Type="Device" Display="advanced" Required="true" Mask="false" />
-  <Config Name="TTY 0" Target="/dev/tty0" Default="/dev/tty0" Mode="rw" Description="Virtual terminal device required by the container session." Type="Device" Display="advanced" Required="true" Mask="false" />
-  <Config Name="TTY 1" Target="/dev/tty1" Default="/dev/tty1" Mode="rw" Description="Virtual terminal device required by the container session." Type="Device" Display="advanced" Required="true" Mask="false" />
   <Config Name="NVIDIA GPU" Target="NVIDIA_VISIBLE_DEVICES" Default="GPU-REPLACE-ME" Mode="" Description="UUID of the NVIDIA GPU assigned to Omarchy. Find it with nvidia-smi." Type="Variable" Display="always" Required="true" Mask="false" />
   <Config Name="NVIDIA capabilities" Target="NVIDIA_DRIVER_CAPABILITIES" Default="all" Mode="" Description="Driver capabilities injected by NVIDIA Container Toolkit." Type="Variable" Display="advanced" Required="true" Mask="false" />
   <Config Name="Sunshine base port" Target="SUNSHINE_PORT" Default="47989" Mode="" Description="Keep the standard port on the dedicated container IP. Custom ports are not compatible with every Moonlight client." Type="Variable" Display="advanced" Required="true" Mask="false" />
-  <Config Name="Sunshine input seat" Target="SUNSHINE_SEAT" Default="seat9" Mode="" Description="Applied only to container Sunshine. If changed, the host udev rule must match the same suffix." Type="Variable" Display="advanced" Required="true" Mask="false" />
   <Config Name="Sunshine CSRF origins" Target="SUNSHINE_CSRF_ALLOWED_ORIGINS" Default="" Mode="" Description="Comma-separated trusted Web UI origins including scheme and port, for example https://192.168.1.250:47990." Type="Variable" Display="always" Required="false" Mask="false" />
   <Config Name="Omarchy output" Target="OMARCHY_OUTPUT_NAME" Default="OMARCHY" Mode="" Description="Name of the Hyprland headless output." Type="Variable" Display="advanced" Required="true" Mask="false" />
   <Config Name="Resolution" Target="OMARCHY_RESOLUTION" Default="2560x1440" Mode="" Description="Initial headless output resolution." Type="Variable" Display="always" Required="true" Mask="false" />
