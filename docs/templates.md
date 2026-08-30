@@ -11,8 +11,8 @@ selects the input topology.
 | `compose.seat9.yml` | Existing seat9 isolation is preferred | Install `host/72-omarchy-sunshine-seat.rules` | No host `/dev/input` mapping |
 
 All profiles persist `/home/omarchy` and `/config` through host bind mounts.
-Compose defaults to the repository-relative `../appdata/omarchy-docker` path
-(relative to the project root); set `APPDATA_PATH` in `.env` for another local path.
+Compose defaults to the repository-relative `./appdata/omarchy-docker` path;
+set `APPDATA_PATH` in `.env` for another local path.
 The Unraid XML intentionally keeps its `/mnt/user/appdata/...` defaults.
 
 The default capability set retains `MKNOD` because the seat9 profile creates

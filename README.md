@@ -1,9 +1,10 @@
-# Omarchy on Unraid — headless Docker prototype
+# Omarchy in Docker
 
-This image runs **Omarchy 4's userspace desktop** in Docker rather than placing
+This project runs **Omarchy 4's userspace desktop** in Docker rather than placing
 QEMU inside Docker. It installs the Omarchy runtime/settings payloads, Hyprland,
 Quickshell and UWSM, creates a named Hyprland headless output, then streams that
-output with Sunshine using NVIDIA NVENC.
+output with Sunshine using NVIDIA NVENC. It supports general Linux Docker hosts;
+Unraid is one documented deployment target.
 
 It deliberately **does not install Omarchy's machine-level boot stack**
 (Limine, Snapper, SDDM). The image installs tiny virtual-provider stubs for
@@ -51,14 +52,14 @@ Build and load the default `core` image with Buildx:
 docker buildx build --load --progress=plain \
   --build-arg OMARCHY_CHANNEL=stable \
   --build-arg OMARCHY_PROFILE=core \
-  -t local/omarchy-unraid:test .
+  -t local/omarchy:test .
 ```
 
 Then validate its packages, commands, service files, permissions, linked
 libraries, and seeded configuration:
 
 ```bash
-./tests/smoke-image.sh local/omarchy-unraid:test
+./tests/smoke-image.sh local/omarchy:test
 ```
 
 This smoke test does not prove GPU rendering, Wayland capture, NVENC, or input.
@@ -79,11 +80,7 @@ template at a time; do not run multiple templates with the default container
 name. Detailed input and persistence notes are in
 [Deployment templates](docs/templates.md).
 
-Choose one template; do not run multiple profiles with the default container
-name. For CachyOS development, create the local environment file and select a
-GPU:
-
-Create the local environment file and select a GPU:
+For a local Docker host, create the environment file and select a GPU:
 
 ```bash
 cp .env.example .env
@@ -161,7 +158,7 @@ For host-desktop input isolation without host changes, use the bridge profile;
 for the seat-based fallback, use the seat9 profile and its input guide.
 
 If Sunshine is accessed through a non-default hostname or address, add its
-complete browser origin to `.env` on CachyOS or the XML variable on Unraid:
+complete browser origin to `.env` on a local host or the XML variable on Unraid:
 
 ```ini
 SUNSHINE_CSRF_ALLOWED_ORIGINS=https://192.168.1.250:47990
@@ -191,7 +188,7 @@ Look for `omarchy_stream` under the **AUDIO** section.
 
 ## Virtual display settings
 
-Runtime defaults (`.env` on CachyOS and XML fields on Unraid):
+Runtime defaults (`.env` for local Compose and XML fields on Unraid):
 
 ```ini
 OMARCHY_OUTPUT_NAME=OMARCHY
@@ -287,8 +284,8 @@ The Unraid XML template persists:
 /mnt/user/appdata/omarchy-docker/sunshine  -> /config
 ```
 
-The local Compose templates default to `../appdata/omarchy-docker` relative to
-`templates/`; override `APPDATA_PATH` when starting on another host.
+The local Compose templates default to `./appdata/omarchy-docker` in the
+project directory; override `APPDATA_PATH` when starting on another host.
 
 The image copies Omarchy's `/etc/skel` defaults into an empty persistent home
 on first boot. Existing files are not overwritten. Per-user application data
@@ -334,8 +331,8 @@ If it does not come up immediately, the most useful distinction is:
 7. **Everything works on its own but conflicts with Steam Headless** — then
    test same-GPU coexistence separately; do not change three variables at once.
 
-This is intentionally a prototype with strong diagnostics rather than a black
-box image.
+The project favors transparent configuration and diagnostics so deployments can
+be adapted to different Linux hosts and input paths.
 
 ## Development roadmap
 
