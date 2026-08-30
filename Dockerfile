@@ -30,6 +30,7 @@ RUN set -eux; \
     pacman -Syy --noconfirm; \
     pacman -S --noconfirm --needed archlinux-keyring; \
     pacman-key --init; \
+    pacman-key --populate archlinux; \
     install -d /tmp/container-install-shims; \
     printf '#!/bin/sh\nexit 0\n' > /tmp/container-install-shims/modprobe; \
     printf '#!/bin/sh\nexit 0\n' > /tmp/container-install-shims/udevadm; \
