@@ -44,8 +44,14 @@ if ! hyprctl -j monitors all 2>/dev/null | jq -e \
   hyprctl output create headless "$OMARCHY_OUTPUT_NAME"
 fi
 
-echo "Configuring ${OMARCHY_OUTPUT_NAME}: ${OMARCHY_RESOLUTION}@${OMARCHY_REFRESH}, scale ${OMARCHY_SCALE}"
-hyprctl eval "hl.monitor({ output = \"${OMARCHY_OUTPUT_NAME}\", mode = \"${OMARCHY_RESOLUTION}@${OMARCHY_REFRESH}\", position = \"0x0\", scale = ${OMARCHY_SCALE} })"
+output_scale="${OMARCHY_SCALE}"
+monitors_config="$HOME/.config/hypr/monitors.lua"
+if [[ -f "$monitors_config" ]]; then
+  saved_scale="$(sed -nE 's/.*omarchy_monitor_scale[[:space:]]*=[[:space:]]*([0-9]+([.][0-9]+)?).*/\1/p' "$monitors_config" | head -n1)"
+  [[ -n "$saved_scale" ]] && output_scale="$saved_scale"
+fi
+echo "Configuring ${OMARCHY_OUTPUT_NAME}: ${OMARCHY_RESOLUTION}@${OMARCHY_REFRESH}, scale ${output_scale}"
+hyprctl eval "hl.monitor({ output = \"${OMARCHY_OUTPUT_NAME}\", mode = \"${OMARCHY_RESOLUTION}@${OMARCHY_REFRESH}\", position = \"0x0\", scale = ${output_scale} })"
 
 # Moonlight should see only the stable virtual output. Keep /dev/dri available
 # for GPU rendering, but disable any physical connectors that Aquamarine found.

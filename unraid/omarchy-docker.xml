@@ -30,7 +30,7 @@
   <Config Name="Omarchy output" Target="OMARCHY_OUTPUT_NAME" Default="OMARCHY" Mode="" Description="Name of the Hyprland headless output." Type="Variable" Display="advanced" Required="true" Mask="false" />
   <Config Name="Resolution" Target="OMARCHY_RESOLUTION" Default="2560x1440" Mode="" Description="Initial headless output resolution." Type="Variable" Display="always" Required="true" Mask="false" />
   <Config Name="Refresh rate" Target="OMARCHY_REFRESH" Default="60" Mode="" Description="Initial headless output refresh rate." Type="Variable" Display="always" Required="true" Mask="false" />
-  <Config Name="Display scale" Target="OMARCHY_SCALE" Default="1" Mode="" Description="Hyprland output scale." Type="Variable" Display="always" Required="true" Mask="false" />
+  <Config Name="Display scale" Target="OMARCHY_SCALE" Default="1" Mode="" Description="Fallback Hyprland output scale used only when no saved value exists in the persistent Omarchy home." Type="Variable" Display="always" Required="true" Mask="false" />
   <Config Name="Renderer" Target="WLR_RENDERER" Default="gles2" Mode="" Description="Renderer used by the headless Wayland session." Type="Variable" Display="advanced" Required="true" Mask="false" />
   <Config Name="Allow empty libinput" Target="WLR_LIBINPUT_NO_DEVICES" Default="1" Mode="" Description="Allows Hyprland to start before Sunshine creates virtual input devices." Type="Variable" Display="advanced" Required="true" Mask="false" />
   <Config Name="DRM selection" Target="AQ_DRM_DEVICES" Default="" Mode="" Description="Optional explicit DRM card, for example /dev/dri/card1. Leave blank unless Hyprland chooses the wrong GPU." Type="Variable" Display="advanced" Required="false" Mask="false" />
