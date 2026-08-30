@@ -76,6 +76,7 @@ RUN set -eux; \
       > /tmp/omarchy-container-stubs/PKGBUILD; \
     runuser -u packagebuilder -- bash -lc 'cd /tmp/omarchy-container-stubs && makepkg --noconfirm'; \
     pacman -U --noconfirm /tmp/omarchy-container-stubs/omarchy-container-stubs-1-1-any.pkg.tar.*; \
+    sed -i 's/^SigLevel = Required DatabaseOptional$/SigLevel = Optional TrustAll/' /etc/pacman.conf; \
     pacman -S --noconfirm --needed omarchy-settings omarchy; \
     sed -i 's/^SigLevel = Optional TrustAll$/SigLevel = Required DatabaseOptional/' /etc/pacman.conf; \
     pacman -Syy --noconfirm; \
