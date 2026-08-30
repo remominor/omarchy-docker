@@ -214,18 +214,12 @@ not additional active Sunshine displays.
 
 ## GPU / DRM selection
 
-The default templates retain the full `/dev/dri` mapping for NVIDIA
-compatibility. An experimental render-node-only setup can be tried by replacing
-that mapping and setting `AQ_DRM_DEVICES` to the host render node:
-
-```ini
-DRI_RENDER_NODE=/dev/dri/renderD129
-AQ_DRM_DEVICES=/dev/dri/renderD129
-```
-
-This is not the default: the NVIDIA container runtime may inject a card node,
-and some Hyprland/Aquamarine combinations require KMS access. The monitor
-guard remains the broadly compatible protection against physical outputs.
+The templates retain the full `/dev/dri` mapping for NVIDIA compatibility. The
+render-node pattern used by the Labwc reference containers does not mean
+render-only access: those containers map both card and render nodes and set
+wlroots' `WLR_RENDER_DRM_DEVICE`. Hyprland uses Aquamarine instead, where
+`AQ_DRM_DEVICES` selects the DRM GPU and should not be pointed at a render node
+alone. The monitor guard remains the protection against physical outputs.
 
 A useful host-side mapping command is:
 
