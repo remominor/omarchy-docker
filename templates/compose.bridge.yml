@@ -18,6 +18,8 @@ services:
       - /dev/uinput:/dev/uinput
       - /dev/dri:/dev/dri
       - /dev/fuse:/dev/fuse
+      - /dev/tty0:/dev/tty0
+      - /dev/tty1:/dev/tty1
     device_cgroup_rules: ["c 13:* rmw"]
     shm_size: 2gb
     ports: ["47984-47990:47984-47990/tcp", "48010:48010/tcp", "47998-48000:47998-48000/udp"]
@@ -37,6 +39,7 @@ services:
     volumes:
       - ${APPDATA_PATH:-/mnt/user/appdata/omarchy-docker}/home:/home/omarchy
       - ${APPDATA_PATH:-/mnt/user/appdata/omarchy-docker}/sunshine:/config
+      - ${GAMES_PATH:-/mnt/user/appdata/omarchy-docker/games}:/mnt/games
       - /dev/input:/host/input:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs: [/run, /run/lock, /tmp]

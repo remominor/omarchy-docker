@@ -62,12 +62,20 @@ libraries, and seeded configuration:
 This smoke test does not prove GPU rendering, Wayland capture, NVENC, or input.
 Those require starting the container with NVIDIA, DRM, and uinput devices.
 
-## CachyOS development
+## Deployment templates
 
-`compose-cachyos.yml` is the only Compose deployment maintained by this
-project. It is the validated development configuration for a CachyOS graphical
-host, using a private Docker bridge and Sunshine's standard ports published
-one-to-one.
+The development branch has three selectable Compose templates documented in
+[Deployment templates](docs/templates.md):
+
+- `headless` uses virtual input only and needs no host seat rule.
+- `bridge` reads `/dev/input` read-only and exclusively grabs Sunshine's
+  physical event devices through the custom Wayland bridge.
+- `seat9` uses the validated private-device path and requires the host seat9
+  udev rule.
+
+Choose one template; do not run multiple profiles with the default container
+name. For CachyOS development, create the local environment file and select a
+GPU:
 
 Create the local environment file and select a GPU:
 
@@ -84,8 +92,7 @@ NVIDIA_VISIBLE_DEVICES=GPU-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ```
 
 ```bash
-docker compose -f compose-cachyos.yml build
-docker compose -f compose-cachyos.yml up -d --force-recreate
+docker compose -f templates/compose.bridge.yml up -d --build
 docker logs -f omarchy
 ```
 
@@ -93,8 +100,8 @@ Host Sunshine must be stopped while this configuration owns the host's
 standard Sunshine ports. This is only a port-coexistence requirement; the
 Omarchy setup does not alter the host Sunshine service or environment.
 
-Install the host seat rule before the final container restart as described in
-[Input isolation](docs/input-isolation.md).
+Install the host seat rule only when using the `seat9` template, as described
+in [Input isolation](docs/input-isolation.md).
 
 ## Unraid deployment
 
@@ -256,16 +263,23 @@ runuser -u omarchy -- env \
 
 ## Persistent data
 
-The CachyOS Compose file and Unraid XML template persist:
+The Compose templates and Unraid XML template persist:
 
 ```text
 /mnt/user/appdata/omarchy-docker/home      -> /home/omarchy
 /mnt/user/appdata/omarchy-docker/sunshine  -> /config
+/mnt/user/appdata/omarchy-docker/games     -> /mnt/games
 ```
 
+Set `GAMES_PATH` (Compose) or the **Games and applications** path (Unraid) to
+an array/share location when appropriate. This is an explicit application
+library mount, not a Docker-managed volume, so it survives image replacement.
+
 The image copies Omarchy's `/etc/skel` defaults into an empty persistent home
-on first boot. Existing files are not overwritten. A dedicated user service
-creates the headless output after UWSM begins launching Hyprland.
+on first boot. Existing files are not overwritten. Per-user application data
+and Flatpak installations belong in that home bind mount; image-level package
+changes require a rebuild. See [Deployment templates](docs/templates.md) for
+the update and Flatpak/proc guidance.
 
 For a clean retry, stop and remove the container, move the two persistent
 directories aside, then recreate it from Compose or DockerMan. Moving them
@@ -273,18 +287,17 @@ aside preserves Sunshine pairing and the Omarchy home for recovery.
 
 ## Security note
 
-The CachyOS Compose file and Unraid XML run with `privileged: false`. They
-expose only the required device classes and add a bounded set of capabilities,
-including `SYS_ADMIN`, `MKNOD`, and `NET_ADMIN`. This is substantially narrower
-than privileged mode but is still a high-trust desktop container, and its
-persistent user has passwordless sudo/polkit authorization inside the
-container.
+The bridge and seat9 Compose/XML deployments run with `privileged: false`.
+They expose only the required device classes and a bounded set of capabilities,
+including `SYS_ADMIN`, `MKNOD`, and `NET_ADMIN`. The headless template retains
+privileged mode for the simplest virtual-input setup. Every profile is still a
+high-trust desktop container, and its persistent user has passwordless
+sudo/polkit authorization inside the container.
 
-The host's `/dev/input` and `/run/udev` are deliberately not mounted by the
-recommended configurations. The container creates only its three matching
-Sunshine event nodes and supplies a private udev database and hotplug event to
-Hyprland. Do not add broad host input or udev mounts as a troubleshooting
-shortcut; doing so defeats this isolation boundary.
+Host input mappings are intentional: headless maps no input tree, bridge maps
+`/dev/input` read-only solely for its exclusive grabs, and seat9 maps neither
+host input nor host udev. Do not add broad mappings to the latter two as a
+troubleshooting shortcut; that defeats their isolation boundary.
 
 ## Expected first failure points
 
