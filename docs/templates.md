@@ -76,6 +76,16 @@ with `pacman` modify the writable container layer and are lost on recreation;
 bake those changes into a rebuild or use a per-user installer under
 `/home/omarchy` when available.
 
+### Future user bootstrap hook
+
+If recurring setup becomes necessary, a future enhancement could run scripts
+from the persistent, user-owned directory
+`/home/omarchy/.config/omarchy-container/bootstrap.d/` during session startup.
+That hook should be limited to user-level configuration and installs, such as
+`~/.local` tools or per-user Flatpaks. It should not become a root package
+install mechanism: system packages belong in the Dockerfile/profile and the
+monthly image rebuild process.
+
 Flatpak is not currently part of the core image. If it is added later, keep
 user installations under the home bind mount. Do not add a `/proc` bind mount:
 Docker already provides proc, and Flatpak setup must tolerate an existing proc
