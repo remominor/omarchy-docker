@@ -27,6 +27,7 @@ RUN set -eux; \
     esac; \
     printf 'Server = %s\n' "${ARCH_MIRROR}" > /etc/pacman.d/mirrorlist; \
     printf '\n[omarchy]\nSigLevel = Optional TrustAll\nServer = %s\n' "${OMARCHY_REPO}" >> /etc/pacman.conf; \
+    printf '\n[multilib]\nInclude = /etc/pacman.d/mirrorlist\n' >> /etc/pacman.conf; \
     pacman -Syy --noconfirm; \
     pacman -S --noconfirm --needed archlinux-keyring; \
     pacman-key --init; \
