@@ -158,12 +158,14 @@ RUN set -eux; \
       /usr/local/bin/omarchy-sync-input-nodes \
       /usr/local/bin/omarchy-container-check \
       /usr/local/bin/omarchy-audio-init \
+      /usr/local/bin/omarchy-update-restart \
       /usr/local/sbin/omarchy-container-init \
       /usr/local/sbin/omarchy-input-bridge-service \
       /usr/local/sbin/omarchy-input-bridge-failsafe \
       /usr/local/sbin/omarchy-start-user; \
     chmod 0755 /usr/share/omarchy/bin/omarchy-refresh-hyprland; \
     install -Dm0755 /usr/share/omarchy/bin/omarchy-refresh-hyprland /usr/bin/omarchy-refresh-hyprland; \
+    install -Dm0755 /usr/local/bin/omarchy-update-restart /usr/bin/omarchy-update-restart; \
     chmod 0750 /etc/sudoers.d; \
     chmod 0440 /etc/sudoers.d/omarchy-container; \
     systemctl enable omarchy-user.service seatd.service; \

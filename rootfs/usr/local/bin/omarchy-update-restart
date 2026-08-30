@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Container-safe variant of Omarchy's reboot/restart helper. Docker shares the
+# host kernel, so an image with no /usr/lib/modules/*/vmlinuz must not report a
+# kernel update on every Omarchy update. Other reboot and service-restart checks
+# remain aligned with the Omarchy helper.
+
+echo
+
+confirm_reboot() {
+  gum confirm "$1" && { omarchy-system-reboot; exit 0; }
+}
+
+running_kernel=$(uname -r)
+kernel_updated=false
+installed_kernel=false
+
+for kernel in /usr/lib/modules/*/vmlinuz; do
+  [[ -f $kernel ]] || continue
+  installed_kernel=true
+  if pacman -Qo "$kernel" &>/dev/null; then
+    installed_name=$(basename "$(dirname "$kernel")")
+    if [[ $installed_name != "$running_kernel" ]]; then
+      kernel_updated=true
+    else
+      kernel_updated=false
+      break
+    fi
+  fi
+done
+
+if [[ $installed_kernel == true && $kernel_updated == true ]]; then
+  confirm_reboot "Linux kernel has been updated. Reboot?"
+elif [[ -f $HOME/.local/state/omarchy/reboot-required ]]; then
+  confirm_reboot "Updates require reboot. Ready?"
+fi
+
+running_hyprland=$(readlink /proc/$(pgrep -x Hyprland)/exe 2>/dev/null)
+if [[ $running_hyprland == *"(deleted)"* ]]; then
+  confirm_reboot "Hyprland has been updated. Reboot?"
+fi
+
+for file in "$HOME"/.local/state/omarchy/restart-*-required; do
+  if [[ -f $file ]]; then
+    filename=$(basename "$file")
+    service=${filename#restart-}
+    service=${service%-required}
+    echo "Restarting $service"
+    omarchy-state clear "$filename"
+    omarchy-restart-"$service" || true
+  fi
+done
+
+echo -e "\e[32m\nRestarting shell\e[0m"
+echo "All plugins have been reloaded"
+omarchy-restart-shell || true
