@@ -6,6 +6,20 @@ gid=1000
 home=/home/omarchy
 seed=/opt/omarchy-home-seed
 
+# Device group IDs come from the host and may not match Arch's named groups.
+# Create matching supplementary groups before the user manager starts.
+for device in /dev/uinput /dev/input/event* /dev/dri/*; do
+  [[ -c "$device" ]] || continue
+  device_gid="$(stat -c '%g' "$device")"
+  [[ "$device_gid" != 0 ]] || continue
+  device_group="$(getent group "$device_gid" | cut -d: -f1 || true)"
+  if [[ -z "$device_group" ]]; then
+    device_group="omarchy-device-${device_gid}"
+    getent group "$device_group" >/dev/null || groupadd --gid "$device_gid" "$device_group"
+  fi
+  usermod -aG "$device_group" omarchy
+done
+
 mkdir -p "$home" /config /run/user "$home/.config"
 chown "$uid:$gid" "$home" /config
 
@@ -17,6 +31,11 @@ if [[ ! -e "$home/.omarchy-container-seeded" ]]; then
 fi
 chown -R "$uid:$gid" "$home" /config
 
+# Sunshine creates virtual input event nodes after the compositor starts.
+# Docker does not automatically materialize those nodes in the container's
+# private /dev, so keep them synchronized from the host sysfs tree.
+/usr/local/bin/omarchy-sync-input-nodes &
+
 # Persist Docker-provided settings for both the system manager and user manager.
 cat > /etc/omarchy-container.env <<EOF
 OMARCHY_PATH=/usr/share/omarchy
@@ -25,6 +44,7 @@ OMARCHY_RESOLUTION=${OMARCHY_RESOLUTION:-2560x1440}
 OMARCHY_REFRESH=${OMARCHY_REFRESH:-60}
 OMARCHY_SCALE=${OMARCHY_SCALE:-1}
 SUNSHINE_PORT=${SUNSHINE_PORT:-47989}
+SUNSHINE_SEAT=${SUNSHINE_SEAT:-seat9}
 SUNSHINE_CSRF_ALLOWED_ORIGINS=${SUNSHINE_CSRF_ALLOWED_ORIGINS:-}
 NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
 NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-all}
@@ -55,6 +75,16 @@ fi
 if [[ -n "${SUNSHINE_CSRF_ALLOWED_ORIGINS:-}" ]]; then
   sed -i '/^csrf_allowed_origins[[:space:]]*=/d' /config/sunshine.conf
   printf 'csrf_allowed_origins = %s\n' "$SUNSHINE_CSRF_ALLOWED_ORIGINS" >> /config/sunshine.conf
+fi
+
+# Keep explicit deployment settings effective even when /config is persisted.
+if [[ -n "${SUNSHINE_PORT:-}" ]]; then
+  sed -i '/^port[[:space:]]*=/d' /config/sunshine.conf
+  printf 'port = %s\n' "$SUNSHINE_PORT" >> /config/sunshine.conf
+fi
+if [[ -n "${OMARCHY_OUTPUT_NAME:-}" ]]; then
+  sed -i '/^output_name[[:space:]]*=/d' /config/sunshine.conf
+  printf 'output_name = %s\n' "$OMARCHY_OUTPUT_NAME" >> /config/sunshine.conf
 fi
 
 if [[ ! -f /config/apps.json ]]; then

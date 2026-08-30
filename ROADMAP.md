@@ -29,12 +29,14 @@ and compositor implementation should not be copied into this image.
   `OpenEncodeSessionEx failed: unsupported device (2)`.
 - Prefer a container-owned D-Bus and user systemd manager. Do not bind the
   host system bus into the container.
-- When privileges are tightened, map the actual numeric GIDs of `/dev/dri`,
-  `/dev/uinput`, and `/dev/input/event*`; host and container group names do
-  not guarantee matching IDs.
-- If Sunshine creates an input device in sysfs without a matching node in the
-  container's private `/dev`, materialize the event node from the sysfs
-  major/minor instead of making all devices world-writable.
+- The CachyOS Compose file and Unraid XML now run non-privileged with explicit
+  devices, capabilities, and input cgroup rules.
+- Sunshine input uses a split-seat design: the host assigns uniquely suffixed
+  Omarchy devices to seat9, while the private container udev database assigns
+  the matching event nodes to seat0 for Hyprland.
+- Materializing `/dev/input/event*` is not sufficient for hotplug. Create the
+  private udev record and emit a GROUP_UDEV add event after creating the node;
+  reverse that sequence on removal.
 - Keep PipeWire, WirePlumber, and a predictable null sink as the default
   headless audio path.
 - Treat Sunshine Web UI CSRF origins and client-driven output resolution as
@@ -67,19 +69,21 @@ and compositor implementation should not be copied into this image.
 
 ### 4. Input and coexistence
 
-- Verify Moonlight keyboard, mouse, and controller input.
-- Correlate `/sys/class/input`, `/dev/input/event*`, and `/dev/uinput` if input
-  is incomplete.
+- Keyboard, pointer motion, and clicks are verified through Moonlight without
+  reaching the CachyOS KDE host, including while an RDP session remains
+  active. Both Sunshine mouse devices are attached to Hyprland.
+- Controller input remains to be verified.
 - Only after the dedicated-GPU path passes, test coexistence and then optional
   same-GPU sharing with `steam-wayland`.
 
 ### 5. Hardening
 
-- Replace `privileged: true` with explicit devices, capabilities, and device
-  cgroup rules.
-- Add runtime numeric-GID mapping before dropping broad device access.
-- Keep host networking only where it is needed; compare it with the dedicated
-  IP configuration.
+- Keep the validated explicit devices, capabilities, and device cgroup rules;
+  do not restore privileged mode or broad host input mounts.
+- Continue reducing individual capabilities where runtime testing proves they
+  are unnecessary.
+- Keep the private bridge/custom-network namespace required by fake-udev; do
+  not restore host networking.
 - Remove passwordless elevation that is no longer required.
 
 ### 6. Quality-of-life features
@@ -88,8 +92,8 @@ and compositor implementation should not be copied into this image.
   `SUNSHINE_CLIENT_FPS` to the named Hyprland output with a known-good fallback.
 - Add an environment-controlled Sunshine CSRF origin list without overwriting
   user-managed configuration.
-- Add an Unraid Community Applications template after the runtime contract is
-  stable.
+- Publish the validated Unraid XML through Community Applications after the
+  image distribution path is stable.
 
 ## First-pass acceptance checklist
 
@@ -99,8 +103,10 @@ and compositor implementation should not be copied into this image.
 - [ ] Named Hyprland headless output is active at scale 1.
 - [ ] Omarchy desktop is visible before a streaming client connects.
 - [ ] Sunshine captures through Wayland and initializes NVENC.
-- [ ] Moonlight video, audio, keyboard, mouse, and controller work.
+- [x] Moonlight video, keyboard, and mouse work.
+- [ ] Moonlight audio works through `omarchy_stream.monitor`.
+- [ ] Moonlight controller input works.
 - [ ] Persistent home and Sunshine credentials survive recreation.
-- [ ] Dedicated-IP and shifted-port host-network modes are documented and
-      tested separately.
+- [x] CachyOS bridge Compose and dedicated-IP Unraid XML deployment modes are
+      documented separately.
 - [ ] Same-GPU coexistence is tested only after the independent path passes.

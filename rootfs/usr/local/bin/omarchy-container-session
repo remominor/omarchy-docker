@@ -17,6 +17,11 @@ export XDG_VTNR=0
 export OMARCHY_PATH=/usr/share/omarchy
 export LIBSEAT_BACKEND=seatd
 export SEATD_SOCK=/run/seatd.sock
+# Sunshine creates its virtual keyboard/mouse after a Moonlight client
+# connects. Keep libinput active in the headless compositor and allow the
+# initial scan to be empty so those devices can be picked up on hotplug.
+export WLR_BACKENDS="${WLR_BACKENDS:-headless,libinput}"
+export WLR_LIBINPUT_NO_DEVICES="${WLR_LIBINPUT_NO_DEVICES:-1}"
 
 # NVIDIA/Wayland defaults. Do not force vendor-specific GL variables unless the
 # NVIDIA runtime has actually injected the driver.

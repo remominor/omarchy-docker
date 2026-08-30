@@ -60,27 +60,21 @@ libraries, and seeded configuration:
 ```
 
 This smoke test does not prove GPU rendering, Wayland capture, NVENC, or input.
-Those require starting the privileged container with NVIDIA and DRM devices.
+Those require starting the container with NVIDIA, DRM, and uinput devices.
 
-## Recommended first test
+## CachyOS development
 
-Use a different NVIDIA GPU from Steam Headless for the first boot. Once this is
-working, sharing one GPU is a separate test.
+`compose-cachyos.yml` is the only Compose deployment maintained by this
+project. It is the validated development configuration for a CachyOS graphical
+host, using a private Docker bridge and Sunshine's standard ports published
+one-to-one.
 
-On Unraid:
+Create the local environment file and select a GPU:
 
 ```bash
-mkdir -p /mnt/user/appdata/omarchy-docker/build
-cd /mnt/user/appdata/omarchy-docker/build
-# Copy this project here, then:
 cp .env.example .env
-nano .env
-```
-
-Find your NVIDIA GPU UUIDs:
-
-```bash
 nvidia-smi --query-gpu=index,name,uuid,pci.bus_id --format=csv
+nano .env
 ```
 
 Put the UUID of the GPU you want into:
@@ -89,64 +83,87 @@ Put the UUID of the GPU you want into:
 NVIDIA_VISIBLE_DEVICES=GPU-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ```
 
-## Networking: recommended dedicated IP
-
-Because Steam Headless is already likely using Sunshine/GameStream's default
-port family, the cleanest Unraid setup is giving this container its **own IP**.
-
-Edit:
-
-```ini
-DOCKER_NETWORK=br0
-OMARCHY_IP=192.168.1.250
-```
-
-Use an unused IP appropriate for that Unraid Docker network/VLAN, then:
-
 ```bash
-docker compose -f compose-unraid-ip.yml build --no-cache
-docker compose -f compose-unraid-ip.yml up -d
+docker compose -f compose-cachyos.yml build
+docker compose -f compose-cachyos.yml up -d --force-recreate
 docker logs -f omarchy
 ```
 
-Sunshine uses its normal base port 47989 on that dedicated IP. Its web UI is:
+Host Sunshine must be stopped while this configuration owns the host's
+standard Sunshine ports. This is only a port-coexistence requirement; the
+Omarchy setup does not alter the host Sunshine service or environment.
+
+Install the host seat rule before the final container restart as described in
+[Input isolation](docs/input-isolation.md).
+
+## Unraid deployment
+
+Unraid deployment is defined by
+[unraid/omarchy-docker.xml](unraid/omarchy-docker.xml), not Docker Compose.
+Build the image on Unraid before adding the template:
+
+```bash
+docker build \
+  --build-arg OMARCHY_CHANNEL=stable \
+  --build-arg OMARCHY_PROFILE=core \
+  -t local/omarchy-unraid:latest .
+```
+
+Copy the XML into Unraid's user-template directory if it is not being installed
+through a template repository:
+
+```bash
+cp unraid/omarchy-docker.xml \
+  /boot/config/plugins/dockerMan/templates-user/my-omarchy-docker.xml
+```
+
+The XML defaults to `br0` and an example dedicated IP. In DockerMan, select an
+appropriate custom network and replace the example with an unused IP on that
+network. A dedicated IP lets Omarchy use Sunshine's standard ports while a
+normal host Sunshine instance uses the Unraid host IP.
+
+The template's **Overview**, **Requires**, and individual field descriptions
+document the complete runtime contract. In particular:
+
+- load `uinput` and install the narrow seat9 host rule persistently through
+  `/boot/config/go`;
+- keep `Privileged` disabled;
+- retain the NVIDIA runtime, listed capabilities, cgroup options, ulimits,
+  tmpfs mounts, and input cgroup rule from `ExtraParams`;
+- map `/dev/dri`, `/dev/uinput`, `/dev/fuse`, `/dev/tty0`, and `/dev/tty1`;
+- do not map host `/dev/input`, `/run/udev`, or `/sys/class/input`;
+- keep a private/custom network namespace rather than host networking.
+
+See [Input isolation](docs/input-isolation.md) for the persistent Unraid host
+rule commands and verification sequence.
+
+Sunshine uses its normal base port 47989 on the dedicated IP. Its web UI is:
 
 ```text
-https://<OMARCHY_IP>:47990
+https://<DEDICATED-IP>:47990
 ```
 
 Create the Sunshine web UI account, pair Moonlight, then launch **Omarchy
 Desktop**.
 
-## Host-network fallback
-
-If you do not want a dedicated Docker IP:
-
-```bash
-docker compose -f compose-host.yml build --no-cache
-docker compose -f compose-host.yml up -d
-```
-
-This defaults Sunshine's base port to **48989**, making the web UI:
-
-```text
-https://<UNRAID-IP>:48990
-```
-
-The rest of Sunshine's port family shifts by the same +1000 offset.
+This configuration was validated with CachyOS KDE and an RDP session still
+active. Moonlight keyboard, pointer motion, and clicks reached Omarchy without
+controlling the host desktop after the seat rule was installed and the
+container was restarted. Both Sunshine mouse devices were attached to
+Hyprland.
 
 If Sunshine is accessed through a non-default hostname or address, add its
-complete browser origin to `.env`:
+complete browser origin to `.env` on CachyOS or the XML variable on Unraid:
 
 ```ini
-SUNSHINE_CSRF_ALLOWED_ORIGINS=https://10.50.0.51:48990
+SUNSHINE_CSRF_ALLOWED_ORIGINS=https://192.168.1.250:47990
 ```
 
 Multiple origins may be comma-separated. Include the protocol and port, and
 only list origins you trust.
 
-**Caveat:** Sunshine documents that custom ports may not work with every
-Moonlight client. That is why the dedicated-IP compose file is preferred.
+Sunshine custom ports are deliberately not used because they do not work with
+every Moonlight client.
 
 
 ## Headless audio
@@ -166,7 +183,7 @@ Look for `omarchy_stream` under the **AUDIO** section.
 
 ## Virtual display settings
 
-`.env` defaults:
+Runtime defaults (`.env` on CachyOS and XML fields on Unraid):
 
 ```ini
 OMARCHY_OUTPUT_NAME=OMARCHY
@@ -239,7 +256,7 @@ runuser -u omarchy -- env \
 
 ## Persistent data
 
-The compose files persist:
+The CachyOS Compose file and Unraid XML template persist:
 
 ```text
 /mnt/user/appdata/omarchy-docker/home      -> /home/omarchy
@@ -250,26 +267,24 @@ The image copies Omarchy's `/etc/skel` defaults into an empty persistent home
 on first boot. Existing files are not overwritten. A dedicated user service
 creates the headless output after UWSM begins launching Hyprland.
 
-If you want a totally clean retry:
-
-```bash
-docker compose -f compose-unraid-ip.yml down
-rm -rf /mnt/user/appdata/omarchy-docker/home
-rm -rf /mnt/user/appdata/omarchy-docker/sunshine
-docker compose -f compose-unraid-ip.yml up -d
-```
+For a clean retry, stop and remove the container, move the two persistent
+directories aside, then recreate it from Compose or DockerMan. Moving them
+aside preserves Sunshine pairing and the Omarchy home for recovery.
 
 ## Security note
 
-This prototype intentionally runs `privileged` and gives the container user
-passwordless sudo/polkit authorization. **Treat the container as root-equivalent
-access to the Unraid host's hardware while testing it.** In particular, a
-privileged container can see host device nodes, so do not use disk/firmware/
-power-management utilities from inside it.
+The CachyOS Compose file and Unraid XML run with `privileged: false`. They
+expose only the required device classes and add a bounded set of capabilities,
+including `SYS_ADMIN`, `MKNOD`, and `NET_ADMIN`. This is substantially narrower
+than privileged mode but is still a high-trust desktop container, and its
+persistent user has passwordless sudo/polkit authorization inside the
+container.
 
-That broad access is deliberate for the first GPU/Wayland proof-of-concept.
-Once it works reliably, the next step should be reducing it to explicit
-NVIDIA/DRM/uinput/audio devices and capabilities and removing `privileged`.
+The host's `/dev/input` and `/run/udev` are deliberately not mounted by the
+recommended configurations. The container creates only its three matching
+Sunshine event nodes and supplies a private udev database and hotplug event to
+Hyprland. Do not add broad host input or udev mounts as a troubleshooting
+shortcut; doing so defeats this isolation boundary.
 
 ## Expected first failure points
 
@@ -282,7 +297,13 @@ If it does not come up immediately, the most useful distinction is:
    `WAYLAND_DISPLAY`, the `wlr` capture log, and the named `OMARCHY` output.
 4. **Sunshine captures but NVENC fails** — NVIDIA `video` capability or driver
    library injection is the problem.
-5. **Everything works on its own but conflicts with Steam Headless** — then
+5. **Input reaches both Omarchy and the host** — confirm the `(seat9)` host
+   rule is installed, then restart the container so KDE never opens the new
+   event nodes as seat0. See [Input isolation](docs/input-isolation.md).
+6. **Unraid input works until reboot** — the seat rule was installed only in
+   ephemeral `/etc`; persist its installation through `/boot/config/go` as
+   described in the XML template and input guide.
+7. **Everything works on its own but conflicts with Steam Headless** — then
    test same-GPU coexistence separately; do not change three variables at once.
 
 This is intentionally a prototype with strong diagnostics rather than a black

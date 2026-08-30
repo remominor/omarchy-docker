@@ -2,6 +2,8 @@ FROM archlinux:base-devel
 
 ARG OMARCHY_CHANNEL=stable
 ARG OMARCHY_PROFILE=core
+ARG FAKE_UDEV_COMMIT=903a070b9eee733e146dfe03dc18173caf9eb010
+ARG FAKE_UDEV_SHA256=69368c27a7b996e3e086f1a96d8a9f3ef19c2fdaf5b5ace9ea6b7f34b45f4681
 
 ENV container=docker \
     OMARCHY_PATH=/usr/share/omarchy
@@ -32,11 +34,21 @@ RUN set -eux; \
     PATH="/tmp/container-install-shims:${PATH}" pacman -Syu --noconfirm --needed \
       bash bash-completion ca-certificates curl dbus git glib2 \
       sudo shadow util-linux procps-ng iproute2 iputils jq perl \
-      systemd polkit pambase \
+      systemd polkit pambase libinput evtest \
       base-devel fakeroot pacman-contrib \
       libglvnd egl-wayland vulkan-icd-loader libva mesa-utils vulkan-tools \
       sunshine; \
     rm -rf /tmp/container-install-shims
+
+# Install the statically linked Games-on-Whales fake-udev emitter from a
+# pinned revision. It publishes synthetic GROUP_UDEV events inside the
+# container network namespace after private input nodes are materialized.
+RUN set -eux; \
+    curl -fsSL \
+      "https://raw.githubusercontent.com/XT-Martinez/labwc-headless-docker/${FAKE_UDEV_COMMIT}/executables/fake-udev" \
+      -o /usr/local/bin/fake-udev; \
+    printf '%s  %s\n' "${FAKE_UDEV_SHA256}" /usr/local/bin/fake-udev | sha256sum -c -; \
+    chmod 0755 /usr/local/bin/fake-udev
 
 # Omarchy's meta package intentionally hard-depends on boot-machine components.
 # Supply empty "provides" packages for the pieces a Docker desktop must not own,
@@ -91,6 +103,9 @@ RUN set -eux; \
     chown 1000:1000 /config; \
     systemctl mask \
       getty@.service console-getty.service \
+      systemd-udevd.service \
+      systemd-udevd-control.socket \
+      systemd-udevd-kernel.socket \
       systemd-remount-fs.service \
       systemd-random-seed.service \
       systemd-machine-id-commit.service \
@@ -103,6 +118,7 @@ RUN set -eux; \
       /usr/local/bin/omarchy-container-session \
       /usr/local/bin/omarchy-headless-init \
       /usr/local/bin/omarchy-sunshine \
+      /usr/local/bin/omarchy-sync-input-nodes \
       /usr/local/bin/omarchy-container-check \
       /usr/local/bin/omarchy-audio-init \
       /usr/local/sbin/omarchy-container-init \

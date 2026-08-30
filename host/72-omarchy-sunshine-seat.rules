@@ -1,0 +1,3 @@
+# Only devices created by the Omarchy container Sunshine process carry this
+# suffix. Normal host Sunshine devices remain unsuffixed on seat0.
+SUBSYSTEM=="input", KERNEL=="input*", ATTR{name}=="*(seat9)*", TAG+="seat", ENV{ID_SEAT}="seat9"

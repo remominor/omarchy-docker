@@ -10,6 +10,11 @@ export XDG_SESSION_TYPE=wayland
 export XDG_CURRENT_DESKTOP=Hyprland
 export XDG_SESSION_DESKTOP=Hyprland
 
+# Scope the non-default seat to Sunshine only. Hyprland and seatd remain on
+# their private default seat0, while Sunshine gives its host-kernel devices a
+# unique "(seat9)" suffix for the host udev isolation rule.
+export XDG_SEAT="${SUNSHINE_SEAT:-seat9}"
+
 # User systemd's environment should already have WAYLAND_DISPLAY after the
 # Hyprland startup hook. Recover it from the runtime dir if it does not.
 if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
@@ -23,5 +28,5 @@ if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
   exit 1
 fi
 
-echo "Starting Sunshine on ${WAYLAND_DISPLAY}, output ${OMARCHY_OUTPUT_NAME}, base port ${SUNSHINE_PORT}"
+echo "Starting Sunshine on ${WAYLAND_DISPLAY}, output ${OMARCHY_OUTPUT_NAME}, base port ${SUNSHINE_PORT}, input seat ${XDG_SEAT}"
 exec /usr/bin/sunshine /config/sunshine.conf

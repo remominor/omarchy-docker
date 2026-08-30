@@ -1,0 +1,156 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+seat="${SUNSHINE_SEAT:-seat9}"
+state_dir=/run/omarchy-fake-udev
+udev_dir=/run/udev
+
+mkdir -p /dev/input "$state_dir" "$udev_dir/data"
+touch "$udev_dir/control"
+
+log() {
+  printf '[omarchy-fake-udev] %s\n' "$*" >&2
+}
+
+classify_device() {
+  local name="$1"
+  case "$name" in
+    "Keyboard passthrough (${seat})") device_kind=keyboard ;;
+    "Mouse passthrough (${seat})") device_kind=mouse ;;
+    "Mouse passthrough (${seat}) (absolute)") device_kind=mouse_absolute ;;
+    *) return 1 ;;
+  esac
+}
+
+set_properties() {
+  local kind="$1"
+  properties=("ID_SEAT=seat0" "ID_INPUT=1")
+  case "$kind" in
+    keyboard)
+      properties+=("ID_INPUT_KEY=1" "ID_INPUT_KEYBOARD=1" ".INPUT_CLASS=kbd")
+      ;;
+    mouse)
+      properties+=("ID_INPUT_MOUSE=1" ".INPUT_CLASS=mouse")
+      ;;
+    mouse_absolute)
+      properties+=(
+        "ID_INPUT_MOUSE=1"
+        "ID_INPUT_WIDTH_MM=685"
+        "ID_INPUT_HEIGHT_MM=428"
+        ".INPUT_CLASS=mouse"
+      )
+      ;;
+  esac
+}
+
+emit_event() {
+  local action="$1" event_name="$2" major="$3" minor="$4"
+  local devpath="$5" name="$6" kind="$7" payload property
+
+  set_properties "$kind"
+  payload="$(
+    {
+      printf '%s\0' \
+        "ACTION=$action" \
+        "DEVPATH=$devpath" \
+        "SUBSYSTEM=input" \
+        "DEVNAME=/dev/input/$event_name" \
+        "SEQNUM=$(date +%s%N | cut -b1-12)" \
+        "USEC_INITIALIZED=$(date +%s%N | cut -b1-16)" \
+        "MAJOR=$major" \
+        "MINOR=$minor" \
+        "NAME=$name" \
+        "TAGS=:seat:uaccess:" \
+        "CURRENT_TAGS=:seat:uaccess:"
+      for property in "${properties[@]}"; do
+        printf '%s\0' "$property"
+      done
+    } | base64 -w0
+  )"
+  /usr/local/bin/fake-udev -m "$payload"
+}
+
+write_database() {
+  local major="$1" minor="$2" kind="$3" property
+  set_properties "$kind"
+  {
+    printf 'I:%s\n' "$(date +%s%N | cut -b1-12)"
+    for property in "${properties[@]}"; do
+      printf 'E:%s\n' "$property"
+    done
+    printf 'G:seat\nG:uaccess\nQ:seat\nQ:uaccess\nV:1\n'
+  } > "$udev_dir/data/c${major}:${minor}"
+}
+
+unplug_device() {
+  local marker="$1" event_name major minor devpath kind name
+  mapfile -t device_state < "$marker"
+  event_name="${marker##*/}"
+  major="${device_state[0]}"
+  minor="${device_state[1]}"
+  devpath="${device_state[2]}"
+  kind="${device_state[3]}"
+  name="${device_state[4]}"
+
+  emit_event remove "$event_name" "$major" "$minor" "$devpath" "$name" "$kind" || true
+  rm -f "/dev/input/$event_name" "$udev_dir/data/c${major}:${minor}" "$marker"
+  log "removed $event_name ($name)"
+}
+
+plug_device() {
+  local sys_event="$1" event_name name major minor devpath device marker input_gid
+  event_name="${sys_event##*/}"
+  name="$(cat "$sys_event/device/name" 2>/dev/null || true)"
+  classify_device "$name" || return 0
+  IFS=: read -r major minor < "$sys_event/dev"
+  devpath="$(readlink -f "$sys_event")"
+  devpath="/${devpath#/sys/}"
+  device="/dev/input/$event_name"
+  marker="$state_dir/$event_name"
+
+  if [[ -f "$marker" ]]; then
+    mapfile -t device_state < "$marker"
+    if [[ "${device_state[0]:-}" == "$major" &&
+          "${device_state[1]:-}" == "$minor" &&
+          "${device_state[2]:-}" == "$devpath" &&
+          -c "$device" ]]; then
+      return 0
+    fi
+    unplug_device "$marker"
+  fi
+
+  mknod "$device" c "$major" "$minor"
+  input_gid="$(stat -c '%g' /dev/uinput 2>/dev/null || printf '0')"
+  chgrp "$input_gid" "$device"
+  chmod 0660 "$device"
+  write_database "$major" "$minor" "$device_kind"
+  emit_event add "$event_name" "$major" "$minor" "$devpath" "$name" "$device_kind"
+  printf '%s\n%s\n%s\n%s\n%s\n' \
+    "$major" "$minor" "$devpath" "$device_kind" "$name" > "$marker"
+  log "added $event_name ($name) as private seat0"
+}
+
+reconcile_devices() {
+  local marker event_name sys_event name
+
+  for marker in "$state_dir"/event*; do
+    [[ -f "$marker" ]] || continue
+    event_name="${marker##*/}"
+    sys_event="/sys/class/input/$event_name"
+    name="$(cat "$sys_event/device/name" 2>/dev/null || true)"
+    if [[ ! -e "$sys_event/dev" ]] || ! classify_device "$name"; then
+      unplug_device "$marker"
+    fi
+  done
+
+  for sys_event in /sys/class/input/event*; do
+    [[ -e "$sys_event/dev" ]] || continue
+    plug_device "$sys_event"
+  done
+}
+
+log "watching for Sunshine ($seat) keyboard and mouse devices"
+while :; do
+  reconcile_devices
+  sleep 0.25
+done

@@ -10,7 +10,8 @@ set -euo pipefail
 
 for command in \
   Hyprland hyprctl quickshell uwsm sunshine \
-  pipewire wireplumber pactl chromium foot nautilus jq systemctl; do
+  pipewire wireplumber pactl chromium foot nautilus jq systemctl \
+  evtest fake-udev; do
   command -v "$command" >/dev/null || {
     echo "missing command: $command" >&2
     exit 1
@@ -21,6 +22,7 @@ for path in \
   /usr/local/bin/omarchy-container-session \
   /usr/local/bin/omarchy-headless-init \
   /usr/local/bin/omarchy-sunshine \
+  /usr/local/bin/omarchy-sync-input-nodes \
   /usr/local/bin/omarchy-container-check \
   /usr/local/bin/omarchy-audio-init \
   /usr/local/sbin/omarchy-container-init \
@@ -44,6 +46,8 @@ systemctl is-enabled omarchy-user.service | grep -qx enabled
 systemctl is-enabled seatd.service | grep -qx enabled
 id -nG omarchy | grep -qw seat
 test "$(systemctl is-enabled systemd-udevd.service || true)" = masked
+test "$(systemctl is-enabled systemd-udevd-control.socket || true)" = masked
+test "$(systemctl is-enabled systemd-udevd-kernel.socket || true)" = masked
 locale -a | grep -qi "^en_US.utf8$"
 test "$(stat -c %a /etc/sudoers.d)" = 750
 visudo -cf /etc/sudoers.d/omarchy-container
