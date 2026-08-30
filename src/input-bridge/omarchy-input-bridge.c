@@ -106,6 +106,8 @@ struct bridge {
 	struct zwlr_virtual_pointer_manager_v1 *pointer_manager;
 	struct zwp_virtual_keyboard_v1 *keyboard;
 	struct zwlr_virtual_pointer_v1 *pointer;
+	struct xkb_keymap *xkb_keymap;
+	struct xkb_state *xkb_state;
 	bool metrics_enabled;
 	bool metrics_active;
 	bool metrics_complete;
@@ -115,6 +117,21 @@ struct bridge {
 	uint64_t metrics_flush_calls;
 	uint64_t metrics_flush_eagain;
 };
+
+static void update_keyboard_modifiers(struct bridge *bridge, unsigned int code,
+		bool pressed)
+{
+	if (bridge->xkb_state == NULL)
+		return;
+	/* xkbcommon keycodes are the evdev keycode plus the X11 offset. */
+	xkb_state_update_key(bridge->xkb_state, code + 8,
+		pressed ? XKB_KEY_DOWN : XKB_KEY_UP);
+	zwp_virtual_keyboard_v1_modifiers(bridge->keyboard,
+		xkb_state_serialize_mods(bridge->xkb_state, XKB_STATE_MODS_DEPRESSED),
+		xkb_state_serialize_mods(bridge->xkb_state, XKB_STATE_MODS_LATCHED),
+		xkb_state_serialize_mods(bridge->xkb_state, XKB_STATE_MODS_LOCKED),
+		xkb_state_serialize_layout(bridge->xkb_state, XKB_STATE_LAYOUT_EFFECTIVE));
+}
 
 static void log_error(const char *message)
 {
@@ -496,6 +513,7 @@ static void release_forwarded_state(struct grabbed_device *device,
 		if (device->kind == DEVICE_KEYBOARD) {
 			zwp_virtual_keyboard_v1_key(bridge->keyboard, time, code,
 				WL_KEYBOARD_KEY_STATE_RELEASED);
+			update_keyboard_modifiers(bridge, code, false);
 		} else {
 			zwlr_virtual_pointer_v1_button(bridge->pointer, time, code,
 				WL_POINTER_BUTTON_STATE_RELEASED);
@@ -793,6 +811,7 @@ static int resynchronize_pressed_keys(struct bridge *bridge,
 			zwp_virtual_keyboard_v1_key(bridge->keyboard, time, code,
 				pressed ? WL_KEYBOARD_KEY_STATE_PRESSED :
 				WL_KEYBOARD_KEY_STATE_RELEASED);
+			update_keyboard_modifiers(bridge, code, pressed);
 		} else {
 			zwlr_virtual_pointer_v1_button(bridge->pointer, time, code,
 				pressed ? WL_POINTER_BUTTON_STATE_PRESSED :
@@ -836,6 +855,7 @@ static int forward_input_event(struct bridge *bridge,
 			zwp_virtual_keyboard_v1_key(bridge->keyboard, time, event->code,
 				event->value != 0 ? WL_KEYBOARD_KEY_STATE_PRESSED :
 				WL_KEYBOARD_KEY_STATE_RELEASED);
+			update_keyboard_modifiers(bridge, event->code, event->value != 0);
 		} else if (event->type == EV_SYN && event->code == SYN_REPORT) {
 			if (bridge_flush(bridge) < 0)
 				return -1;
@@ -1222,6 +1242,13 @@ static int publish_keymap(struct bridge *bridge, const char *layout)
 
 	zwp_virtual_keyboard_v1_keymap(bridge->keyboard,
 		WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, keymap_fd, (uint32_t)keymap_size);
+	bridge->xkb_state = xkb_state_new(keymap);
+	if (bridge->xkb_state == NULL) {
+		log_error("could not create XKB state");
+		goto out;
+	}
+	bridge->xkb_keymap = keymap;
+	keymap = NULL;
 	result = 0;
 
 out:
@@ -1237,6 +1264,10 @@ static void bridge_destroy(struct bridge *bridge)
 {
 	if (bridge->pointer != NULL)
 		zwlr_virtual_pointer_v1_destroy(bridge->pointer);
+	if (bridge->xkb_state != NULL)
+		xkb_state_unref(bridge->xkb_state);
+	if (bridge->xkb_keymap != NULL)
+		xkb_keymap_unref(bridge->xkb_keymap);
 	if (bridge->keyboard != NULL)
 		zwp_virtual_keyboard_v1_destroy(bridge->keyboard);
 	if (bridge->pointer_manager != NULL)

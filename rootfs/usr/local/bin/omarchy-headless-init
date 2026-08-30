@@ -47,6 +47,15 @@ fi
 echo "Configuring ${OMARCHY_OUTPUT_NAME}: ${OMARCHY_RESOLUTION}@${OMARCHY_REFRESH}, scale ${OMARCHY_SCALE}"
 hyprctl eval "hl.monitor({ output = \"${OMARCHY_OUTPUT_NAME}\", mode = \"${OMARCHY_RESOLUTION}@${OMARCHY_REFRESH}\", position = \"0x0\", scale = ${OMARCHY_SCALE} })"
 
+# Moonlight should see only the stable virtual output. Keep /dev/dri available
+# for GPU rendering, but disable any physical connectors that Aquamarine found.
+while IFS= read -r monitor; do
+  [[ -z "$monitor" ]] && continue
+  echo "Disabling physical output: $monitor"
+  hyprctl eval "hl.monitor({ output = \"${monitor}\", disabled = true })" || true
+done < <(hyprctl -j monitors all | jq -r --arg virtual "$OMARCHY_OUTPUT_NAME" \
+  '.[] | select(.name != $virtual) | .name')
+
 # Keep the workspace on the virtual output.
 hyprctl eval "hl.dispatch(hl.dsp.focus({ monitor = \"${OMARCHY_OUTPUT_NAME}\" }))" || true
 
