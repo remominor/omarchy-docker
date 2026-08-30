@@ -91,7 +91,7 @@ RUN set -eux; \
           fastfetch imv inotify-tools \
           noto-fonts noto-fonts-cjk noto-fonts-emoji ;; \
       full) \
-        grep -Ev '^(asdcontrol|bolt|brightnessctl|ddcutil|docker|docker-buildx|docker-compose|kernel-modules-hook|networkmanager|power-profiles-daemon|qemu-user-static-binfmt|sddm|ufw|ufw-docker)$' \
+        grep -Ev '^(#|[[:space:]]*$|asdcontrol|bolt|brightnessctl|ddcutil|docker|docker-buildx|docker-compose|kernel-modules-hook|networkmanager|power-profiles-daemon|qemu-user-static-binfmt|sddm|ufw|ufw-docker)$' \
           /usr/share/omarchy/install/omarchy-base.packages > /tmp/omarchy-container-full.packages; \
         pacman -S --noconfirm --needed $(cat /tmp/omarchy-container-full.packages); \
         rm -f /tmp/omarchy-container-full.packages; \
