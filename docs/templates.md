@@ -28,6 +28,24 @@ docker compose -f templates/compose.bridge.yml up -d --build
 docker compose -f templates/compose.seat9.yml up -d --build
 ```
 
+## Sunshine networking
+
+The bridge and seat9 templates publish Sunshine's standard ports. If the host
+already runs Sunshine, place the container on a custom Docker network with its
+own LAN-reachable IP (for example a macvlan/ipvlan or Unraid custom network)
+and keep the standard ports on that IP. Changing Sunshine to arbitrary host
+ports is not a reliable workaround because some Moonlight clients expect the
+standard port set. Host networking is appropriate for the headless template
+only when no other Sunshine instance needs those ports.
+
+## Useful Omarchy checks
+
+For broader Omarchy smoke testing, rebuild with `OMARCHY_PROFILE=full`, then
+exercise the desktop from Moonlight: Quickshell panels, terminal, Chromium,
+Nautilus, clipboard, screenshots, audio, suspend/reconnect behavior, and
+Sunshine's NVENC stream. Use `omarchy-container-check` before and after each
+change so rendering, user services, audio, and input failures stay distinct.
+
 ## Persistence and updates
 
 The home bind mount is the durable location for user configuration and

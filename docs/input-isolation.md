@@ -81,7 +81,7 @@ input/udev mounts.
 
 ## Runtime design
 
-Use `compose-cachyos.yml` on CachyOS or the Unraid XML template. Both run
+Use `templates/compose.seat9.yml` on CachyOS or the Unraid XML template. Both run
 non-privileged, have a private network namespace and private `/run`, and
 intentionally omit host `/dev/input`, `/run/udev`, and `/sys/class/input` bind
 mounts.

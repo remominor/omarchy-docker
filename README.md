@@ -96,9 +96,12 @@ docker compose -f templates/compose.bridge.yml up -d --build
 docker logs -f omarchy
 ```
 
-Host Sunshine must be stopped while this configuration owns the host's
-standard Sunshine ports. This is only a port-coexistence requirement; the
-Omarchy setup does not alter the host Sunshine service or environment.
+The bridge and seat9 profiles publish Sunshine's standard ports. If host
+Sunshine must remain active, use a custom Docker network with a dedicated,
+LAN-reachable container IP and keep those standard ports on the dedicated IP.
+Do not rely on arbitrary Sunshine port remapping: some Moonlight clients do
+not connect to non-default ports. The Omarchy setup does not alter the host
+Sunshine service or environment.
 
 Install the host seat rule only when using the `seat9` template, as described
 in [Input isolation](docs/input-isolation.md).
