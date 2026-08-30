@@ -274,12 +274,15 @@ runuser -u omarchy -- env \
 
 ## Persistent data
 
-The Compose templates and Unraid XML template persist:
+The Unraid XML template persists:
 
 ```text
 /mnt/user/appdata/omarchy-docker/home      -> /home/omarchy
 /mnt/user/appdata/omarchy-docker/sunshine  -> /config
 ```
+
+The local Compose templates default to `../appdata/omarchy-docker` relative to
+`templates/`; override `APPDATA_PATH` when starting on another host.
 
 The image copies Omarchy's `/etc/skel` defaults into an empty persistent home
 on first boot. Existing files are not overwritten. Per-user application data

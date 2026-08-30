@@ -26,8 +26,8 @@ services:
       SUNSHINE_PORT: ${SUNSHINE_PORT:-47989}
       SUNSHINE_CSRF_ALLOWED_ORIGINS: ${SUNSHINE_CSRF_ALLOWED_ORIGINS:-}
     volumes:
-      - ${APPDATA_PATH:-/mnt/user/appdata/omarchy-docker}/home:/home/omarchy
-      - ${APPDATA_PATH:-/mnt/user/appdata/omarchy-docker}/sunshine:/config
+      - ${APPDATA_PATH:-../appdata/omarchy-docker}/home:/home/omarchy
+      - ${APPDATA_PATH:-../appdata/omarchy-docker}/sunshine:/config
       - /run/udev:/run/udev:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs: [/run, /run/lock, /tmp]

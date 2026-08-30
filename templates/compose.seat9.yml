@@ -48,8 +48,8 @@ services:
       SUNSHINE_CSRF_ALLOWED_ORIGINS: ${SUNSHINE_CSRF_ALLOWED_ORIGINS:-}
       AQ_DRM_DEVICES: ${AQ_DRM_DEVICES:-}
     volumes:
-      - ${APPDATA_PATH:-/mnt/user/appdata/omarchy-docker}/home:/home/omarchy
-      - ${APPDATA_PATH:-/mnt/user/appdata/omarchy-docker}/sunshine:/config
+      - ${APPDATA_PATH:-../appdata/omarchy-docker}/home:/home/omarchy
+      - ${APPDATA_PATH:-../appdata/omarchy-docker}/sunshine:/config
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs: [/run, /run/lock, /tmp]
     healthcheck:
