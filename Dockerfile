@@ -84,7 +84,7 @@ RUN set -eux; \
           alsa-utils pipewire-alsa pipewire-jack pipewire-pulse \
           xdg-desktop-portal-gtk xdg-terminal-exec \
           xdg-desktop-portal flatpak \
-          foot chromium nautilus udiskie \
+          foot neovim chromium nautilus udiskie \
           wl-clipboard grim slurp socat pamixer \
           hyprpicker hyprsunset gpu-screen-recorder \
           fastfetch imv inotify-tools \
