@@ -63,4 +63,18 @@ ss -lntup 2>&1 | grep -E 'sunshine|479|489|480|490' || true
 echo
 tail -80 /home/omarchy/.local/state/omarchy-container/headless-init.log 2>/dev/null
 echo
+
+echo "=== INPUT BRIDGE ==="
+systemctl --no-pager --full status omarchy-input-bridge.service 2>&1 | sed -n '1,100p'
+echo
+ps -C omarchy-input-bridge -o pid,user,uid,etime,args 2>/dev/null
+echo
+findmnt -no TARGET,SOURCE,OPTIONS /host/input 2>&1 || true
+test -d /dev/input && echo "WARNING: /dev/input exists" || echo "/dev/input absent"
+findmnt -no TARGET /run/udev 2>/dev/null && echo "WARNING: /run/udev mounted" || true
+test -f /run/omarchy-input-bridge/ready && echo "bridge readiness: published" || echo "bridge readiness: absent"
+printf 'Compositor environment: %s\n' "${compositor_env[*]:-(unavailable)}"
+grep -E 'ready|grabbed|released|ERROR' \
+  <(journalctl --no-pager -u omarchy-input-bridge.service -n 120) 2>/dev/null || true
+echo
 journalctl --no-pager -n 120 -u omarchy-user.service
