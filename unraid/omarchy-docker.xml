@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>omarchy-docker</Name>
-  <Repository>local/omarchy-headless:latest</Repository>
+  <Repository>ghcr.io/remominor/omarchy-docker:headless</Repository>
   <Registry>https://github.com/remominor/omarchy-docker</Registry>
   <Network>host</Network>
   <MyIP></MyIP>
@@ -18,14 +18,16 @@
   <DateInstalled />
   <DonateText />
   <DonateLink />
-  <Requires>NVIDIA Container Toolkit and a locally built local/omarchy-headless:latest image. Host networking is intentional so Sunshine retains its standard ports. Stop any other Sunshine instance using those ports, or use a dedicated custom-network IP with one of the non-headless Compose profiles. No Omarchy-specific host udev rule or host service is required.</Requires>
+  <Requires>NVIDIA Container Toolkit. This template pulls the published headless image from ghcr.io/remominor/omarchy-docker:headless. Host networking is intentional so Sunshine retains its standard ports. Stop any other Sunshine instance using those ports, or use a dedicated custom-network IP with one of the non-headless Compose profiles. No Omarchy-specific host udev rule or host service is required.</Requires>
   <Config Name="Omarchy home" Target="/home/omarchy" Default="/mnt/user/appdata/omarchy-docker/home" Mode="rw" Description="Persistent Omarchy user home." Type="Path" Display="always" Required="true" Mask="false" />
   <Config Name="Sunshine configuration" Target="/config" Default="/mnt/user/appdata/omarchy-docker/sunshine" Mode="rw" Description="Persistent Sunshine credentials, pairing state, and configuration." Type="Path" Display="always" Required="true" Mask="false" />
+  <Config Name="Host udev database" Target="/run/udev" Default="/run/udev" Mode="ro" Description="Read-only host udev database used to discover Sunshine virtual keyboard and mouse devices in headless mode." Type="Path" Display="advanced" Required="true" Mask="false" />
   <Config Name="Host cgroup" Target="/sys/fs/cgroup" Default="/sys/fs/cgroup" Mode="rw" Description="Host cgroup hierarchy required by systemd in the container." Type="Path" Display="advanced" Required="true" Mask="false" />
   <Config Name="NVIDIA GPU" Target="NVIDIA_VISIBLE_DEVICES" Default="GPU-REPLACE-ME" Mode="" Description="UUID of the NVIDIA GPU assigned to Omarchy. Find it with nvidia-smi." Type="Variable" Display="always" Required="true" Mask="false" />
   <Config Name="NVIDIA capabilities" Target="NVIDIA_DRIVER_CAPABILITIES" Default="all" Mode="" Description="Driver capabilities injected by NVIDIA Container Toolkit." Type="Variable" Display="advanced" Required="true" Mask="false" />
   <Config Name="Sunshine base port" Target="SUNSHINE_PORT" Default="47989" Mode="" Description="Keep the standard port on the dedicated container IP. Custom ports are not compatible with every Moonlight client." Type="Variable" Display="advanced" Required="true" Mask="false" />
   <Config Name="Sunshine CSRF origins" Target="SUNSHINE_CSRF_ALLOWED_ORIGINS" Default="" Mode="" Description="Comma-separated trusted Web UI origins including scheme and port, for example https://192.168.1.250:47990." Type="Variable" Display="always" Required="false" Mask="false" />
+  <Config Name="Input mode" Target="OMARCHY_INPUT_MODE" Default="headless" Mode="" Description="Headless Unraid profile: use Sunshine virtual input only; do not start the seat9 event-node helper." Type="Variable" Display="advanced" Required="true" Mask="false" />
   <Config Name="Omarchy output" Target="OMARCHY_OUTPUT_NAME" Default="OMARCHY" Mode="" Description="Name of the Hyprland headless output." Type="Variable" Display="advanced" Required="true" Mask="false" />
   <Config Name="Resolution" Target="OMARCHY_RESOLUTION" Default="2560x1440" Mode="" Description="Initial headless output resolution." Type="Variable" Display="always" Required="true" Mask="false" />
   <Config Name="Refresh rate" Target="OMARCHY_REFRESH" Default="60" Mode="" Description="Initial headless output refresh rate." Type="Variable" Display="always" Required="true" Mask="false" />

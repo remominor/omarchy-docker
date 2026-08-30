@@ -19,8 +19,9 @@ The default capability set retains `MKNOD` because the seat9 profile creates
 private event nodes with `omarchy-sync-input-nodes`. The bridge and headless
 profiles do not use `MKNOD`; it can be removed in a deployment that never uses
 seat9, but is left enabled by default so the shared image remains selectable.
-Only the bridge profile reads host event nodes. Only seat9 runs the virtual
-event-node synchronization helper. The headless profile uses neither.
+Only the bridge profile reads host event nodes. Seat9 and headless run the
+virtual event-node discovery helper; in headless mode it only exposes
+Sunshine-created devices and never reads or grabs host input.
 
 Start one profile at a time:
 
