@@ -214,16 +214,18 @@ not additional active Sunshine displays.
 
 ## GPU / DRM selection
 
-Do not set `AQ_DRM_DEVICES` initially.
-
-If Hyprland chooses the wrong card on a multi-GPU Unraid host, identify the DRM
-card corresponding to the selected GPU and set, for example:
+The default templates retain the full `/dev/dri` mapping for NVIDIA
+compatibility. An experimental render-node-only setup can be tried by replacing
+that mapping and setting `AQ_DRM_DEVICES` to the host render node:
 
 ```ini
-AQ_DRM_DEVICES=/dev/dri/card1
+DRI_RENDER_NODE=/dev/dri/renderD129
+AQ_DRM_DEVICES=/dev/dri/renderD129
 ```
 
-Aquamarine uses `AQ_DRM_DEVICES` as an explicit DRM device list.
+This is not the default: the NVIDIA container runtime may inject a card node,
+and some Hyprland/Aquamarine combinations require KMS access. The monitor
+guard remains the broadly compatible protection against physical outputs.
 
 A useful host-side mapping command is:
 
