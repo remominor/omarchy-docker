@@ -1,0 +1,13 @@
+[Unit]
+Description=Keep physical DRM outputs disabled for the Moonlight desktop
+After=omarchy-headless-init.service
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/omarchy-container.env
+ExecStart=/usr/local/bin/omarchy-monitor-guard
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=default.target

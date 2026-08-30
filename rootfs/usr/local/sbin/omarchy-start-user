@@ -48,3 +48,8 @@ runuser -u "$user" -- env \
   XDG_RUNTIME_DIR="$runtime" \
   DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime/bus" \
   systemctl --user --no-block restart omarchy-headless-init.service
+
+runuser -u "$user" -- env \
+  XDG_RUNTIME_DIR="$runtime" \
+  DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime/bus" \
+  systemctl --user --no-block restart omarchy-monitor-guard.service

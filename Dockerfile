@@ -143,6 +143,7 @@ RUN set -eux; \
     chmod 0755 \
       /usr/local/bin/omarchy-container-session \
       /usr/local/bin/omarchy-headless-init \
+      /usr/local/bin/omarchy-monitor-guard \
       /usr/local/bin/omarchy-sunshine \
       /usr/local/bin/omarchy-sync-input-nodes \
       /usr/local/bin/omarchy-container-check \

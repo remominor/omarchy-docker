@@ -1,0 +1,19 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+source /etc/omarchy-container.env
+export HOME=/home/omarchy
+export XDG_RUNTIME_DIR=/run/user/1000
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+
+while :; do
+  if hyprctl -j monitors all >/tmp/omarchy-monitors.json 2>/dev/null; then
+    while IFS= read -r monitor; do
+      [[ -z "$monitor" ]] && continue
+      hyprctl eval "hl.monitor({ output = \"${monitor}\", disabled = true })" >/dev/null 2>&1 || true
+    done < <(jq -r --arg virtual "$OMARCHY_OUTPUT_NAME" \
+      '.[] | select(.name != $virtual and .disabled != true) | .name' \
+      /tmp/omarchy-monitors.json)
+  fi
+  sleep 2
+done
