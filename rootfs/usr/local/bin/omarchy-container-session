@@ -23,6 +23,14 @@ export SEATD_SOCK=/run/seatd.sock
 export WLR_BACKENDS="${WLR_BACKENDS:-headless,libinput}"
 export WLR_LIBINPUT_NO_DEVICES="${WLR_LIBINPUT_NO_DEVICES:-1}"
 
+# Load the container monitor policy after the user's Omarchy modules. This is
+# an additive include in the persistent user config, so Hyprland reapplies it
+# on display-settings reload without requiring appdata cleanup.
+hypr_config="$HOME/.config/hypr/hyprland.lua"
+if [[ -f "$hypr_config" ]] && ! grep -Fq 'omarchy-container.hypr.container' "$hypr_config"; then
+  printf '\nrequire("omarchy-container.hypr.container")\n' >>"$hypr_config"
+fi
+
 # NVIDIA/Wayland defaults. Do not force vendor-specific GL variables unless the
 # NVIDIA runtime has actually injected the driver.
 if [[ -e /dev/nvidiactl ]]; then

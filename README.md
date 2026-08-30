@@ -212,6 +212,11 @@ The display utility may continue listing disabled HDMI/DP connectors because
 the GPU DRM device remains available for rendering. They are disabled outputs,
 not additional active Sunshine displays.
 
+The container adds a small final Hyprland module to the user config. It keeps
+unspecified outputs disabled and explicitly configures `OMARCHY`, so display
+settings reloads do not let physical connectors claim workspaces. This rule
+does not disable or replace the GPU/DRM rendering path.
+
 ## GPU / DRM selection
 
 The templates retain the full `/dev/dri` mapping for NVIDIA compatibility. The
