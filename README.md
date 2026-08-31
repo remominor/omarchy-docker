@@ -24,10 +24,10 @@ OMARCHY_PROFILE=core
 
 `core` installs the real Omarchy 4 runtime/settings packages plus the desktop
 pieces needed for this use case: Hyprland, Quickshell, UWSM, portals, PipeWire,
-Chromium, Foot, Nautilus, clipboard/screenshot tools, fonts, and streaming
-helpers. The Arch `multilib` repository is enabled so Omarchy's optional Steam
-installer can resolve Steam and 32-bit graphics dependencies. This is the
-profile to prove first.
+Chromium, Foot, Nautilus, clipboard/screenshot tools, fonts, streaming helpers,
+and Omarchy's `cliamp`, `mise`, and `yay` tooling. The Arch `multilib`
+repository is enabled so Omarchy's optional Steam installer can resolve Steam
+and 32-bit graphics dependencies. This is the profile to prove first.
 
 After the container is working, you can rebuild with:
 

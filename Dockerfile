@@ -88,6 +88,7 @@ RUN set -eux; \
           xdg-desktop-portal-gtk xdg-terminal-exec \
           xdg-desktop-portal flatpak \
           foot neovim nano less chromium nautilus udiskie \
+          cliamp mise yay \
           wl-clipboard grim slurp socat pamixer \
           hyprpicker hyprsunset gpu-screen-recorder \
           fastfetch imv inotify-tools \
