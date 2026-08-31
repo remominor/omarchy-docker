@@ -19,30 +19,23 @@ manager, or display manager.
 The default is:
 
 ```ini
-OMARCHY_PROFILE=core
-```
-
-`core` installs the real Omarchy 4 runtime/settings packages plus the desktop
-pieces needed for this use case: Hyprland, Quickshell, UWSM, portals, PipeWire,
-Chromium, Foot, Nautilus, clipboard/screenshot tools, fonts, streaming helpers,
-and Omarchy's `cliamp`, `mise`, and `yay` tooling. The Arch `multilib`
-repository is enabled so Omarchy's optional Steam installer can resolve Steam
-and 32-bit graphics dependencies. This is the profile to prove first.
-
-After the container is working, you can rebuild with:
-
-```ini
 OMARCHY_PROFILE=full
 ```
 
-`full` additionally installs nearly all packages from Omarchy's current
-`install/omarchy-base.packages` list. It filters machine-management packages
+`full` installs the real Omarchy 4 runtime/settings packages plus nearly all
+packages from Omarchy's current base manifest, with machine-only components
+filtered for Docker. This includes Omarchy's `cliamp`, `mise`, and `yay`
+tooling, along with the desktop, development, and application utilities. The
+Arch `multilib` repository is enabled so Steam and 32-bit graphics dependencies
+can resolve.
+
+`core` installs a smaller curated runtime set for minimal images. It filters
 that make no sense or are unsafe in a Docker desktop (boot/session manager,
 host firewall/network manager, kernel hooks, nested Docker, power/display
 hardware controls, and binfmt registration).
 
-The full profile is intentionally not the first-test default: it is much
-larger and adds many unrelated variables while debugging the compositor/GPU.
+Use `core` when image size and a smaller package surface are more important than
+matching the complete Omarchy userspace.
 
 ## Local build validation
 
@@ -51,7 +44,7 @@ Build and load the default `core` image with Buildx:
 ```bash
 docker buildx build --load --progress=plain \
   --build-arg OMARCHY_CHANNEL=stable \
-  --build-arg OMARCHY_PROFILE=core \
+  --build-arg OMARCHY_PROFILE=full \
   -t local/omarchy:test .
 ```
 
@@ -118,7 +111,7 @@ Build the image on Unraid before adding the template:
 ```bash
 docker build \
   --build-arg OMARCHY_CHANNEL=stable \
-  --build-arg OMARCHY_PROFILE=core \
+  --build-arg OMARCHY_PROFILE=full \
   -t local/omarchy-headless:latest .
 ```
 

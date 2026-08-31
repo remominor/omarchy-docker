@@ -52,4 +52,4 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             OMARCHY_CHANNEL=stable
-            OMARCHY_PROFILE=core
+            OMARCHY_PROFILE=full
