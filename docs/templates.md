@@ -62,6 +62,9 @@ profile. It is intentionally manual and is not a bridge acceptance gate.
 - [ ] Verify clipboard copy/paste, screenshots, notifications, and file dialogs.
 - [ ] Verify PipeWire audio reaches Sunshine and survives a reconnect.
 - [ ] Confirm Sunshine reports NVENC rather than software encoding.
+- [ ] If SSH is enabled, recreate the container and confirm the authorized key
+  still works and `sshd` starts automatically; containers without an
+  authorized key must remain SSH-disabled.
 - [ ] Reconnect Moonlight repeatedly and check for stale sessions or stuck
   keyboard/pointer buttons.
 - [ ] For `bridge`, run `omarchy-container-check` and confirm `/host/input` is
