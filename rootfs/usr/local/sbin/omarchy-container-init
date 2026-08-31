@@ -20,7 +20,20 @@ for device in /dev/uinput /dev/input/event* /dev/dri/*; do
   usermod -aG "$device_group" omarchy
 done
 
-mkdir -p "$home" /config /run/user "$home/.config"
+mkdir -p "$home" /config /config/ssh /run/user "$home/.config"
+chmod 0700 /config/ssh
+chown root:root /config/ssh
+
+# Keep SSH host identity across container recreation. The package and config
+# remain image-owned, while generated host keys live with persistent /config.
+for key in ssh_host_rsa_key ssh_host_ecdsa_key ssh_host_ed25519_key; do
+  if [[ -e "/config/ssh/$key" || -L "/config/ssh/$key" ]]; then
+    ln -sfn "/config/ssh/$key" "/etc/ssh/$key"
+  elif [[ -e "/etc/ssh/$key" ]]; then
+    mv "/etc/ssh/$key" "/config/ssh/$key"
+    ln -s "/config/ssh/$key" "/etc/ssh/$key"
+  fi
+done
 chown "$uid:$gid" "$home" /config
 
 # A bind-mounted empty appdata directory hides the image's original home.
@@ -30,6 +43,8 @@ if [[ ! -e "$home/.omarchy-container-seeded" ]]; then
   touch "$home/.omarchy-container-seeded"
 fi
 chown -R "$uid:$gid" "$home" /config
+chown -R root:root /config/ssh
+chmod 0700 /config/ssh
 
 # The seat9 template mirrors Sunshine's virtual event nodes into the private
 # device namespace. Headless also runs this discovery shim because some hosts
@@ -117,6 +132,8 @@ if [[ ! -f /config/apps.json ]]; then
 EOF
 fi
 chown -R "$uid:$gid" /config
+chown -R root:root /config/ssh
+chmod 0700 /config/ssh
 
 # systemd complains if this is stale or absent in some container runtimes.
 [[ -s /etc/machine-id ]] || systemd-machine-id-setup

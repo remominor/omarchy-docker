@@ -100,7 +100,7 @@ RUN set -eux; \
           > /tmp/omarchy-container-full.packages; \
         pacman -S --noconfirm --needed $(cat /tmp/omarchy-container-full.packages); \
         rm -f /tmp/omarchy-container-full.packages; \
-        pacman -S --noconfirm --needed pipewire-alsa pipewire-pulse ;; \
+        pacman -S --noconfirm --needed pipewire-alsa pipewire-pulse steam ;; \
       *) echo "Unsupported OMARCHY_PROFILE=${OMARCHY_PROFILE}; use core or full" >&2; exit 2 ;; \
     esac; \
     flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo; \
