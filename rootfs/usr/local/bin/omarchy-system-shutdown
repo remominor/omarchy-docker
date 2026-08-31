@@ -1,0 +1,3 @@
+#!/bin/bash
+echo "Shutdown is disabled in the Omarchy Docker container; stop the container from Docker." >&2
+exit 1

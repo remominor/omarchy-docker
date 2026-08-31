@@ -153,6 +153,15 @@ RUN set -eux; \
 COPY rootfs/ /
 COPY src/input-bridge/ /tmp/omarchy-input-bridge/
 
+# Reboot and shutdown would target the container's shared host kernel. Remove
+# those actions from seeded Omarchy menus and block the commands defensively.
+RUN set -eux; \
+    for menu in \
+      /usr/share/omarchy/default/omarchy/omarchy-menu.jsonc \
+      /opt/omarchy-home-seed/.config/omarchy/extensions/omarchy-menu.jsonc; do \
+      sed -i '/"system\.reboot":/d; /"system\.shutdown":/d' "$menu"; \
+    done
+
 RUN set -eux; \
     make -C /tmp/omarchy-input-bridge install; \
     rm -rf /tmp/omarchy-input-bridge
@@ -167,6 +176,8 @@ RUN set -eux; \
       /usr/local/bin/omarchy-container-check \
       /usr/local/bin/omarchy-audio-init \
       /usr/local/bin/omarchy-update-restart \
+      /usr/local/bin/omarchy-system-reboot \
+      /usr/local/bin/omarchy-system-shutdown \
       /usr/local/sbin/omarchy-container-init \
       /usr/local/sbin/omarchy-input-bridge-service \
       /usr/local/sbin/omarchy-input-bridge-failsafe \
