@@ -142,6 +142,7 @@ RUN set -eux; \
     chown 1000:1000 /config; \
     systemctl mask \
       getty@.service console-getty.service \
+      systemd-vconsole-setup.service \
       systemd-udevd.service \
       systemd-udevd-control.socket \
       systemd-udevd-kernel.socket \
