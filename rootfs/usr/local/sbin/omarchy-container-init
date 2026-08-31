@@ -35,7 +35,7 @@ chown -R "$uid:$gid" "$home" /config
 # device namespace. Headless also runs this discovery shim because some hosts
 # (notably Unraid with a private /run tmpfs) do not propagate udev events for
 # container-created virtual devices. It never reads or grabs host input.
-input_mode="${OMARCHY_INPUT_MODE:-seat9}"
+input_mode="${OMARCHY_INPUT_MODE:-headless}"
 case "$input_mode" in
   headless|seat9) /usr/local/bin/omarchy-sync-input-nodes & ;;
   bridge) ;;
@@ -50,7 +50,7 @@ OMARCHY_OUTPUT_NAME=${OMARCHY_OUTPUT_NAME:-OMARCHY}
 OMARCHY_RESOLUTION=${OMARCHY_RESOLUTION:-2560x1440}
 OMARCHY_REFRESH=${OMARCHY_REFRESH:-60}
 OMARCHY_SCALE=${OMARCHY_SCALE:-1}
-OMARCHY_INPUT_MODE=${OMARCHY_INPUT_MODE:-seat9}
+OMARCHY_INPUT_MODE=${OMARCHY_INPUT_MODE:-headless}
 SUNSHINE_PORT=${SUNSHINE_PORT:-47989}
 SUNSHINE_NAME=${SUNSHINE_NAME:-Omarchy}
 SUNSHINE_SEAT=${SUNSHINE_SEAT:-seat9}

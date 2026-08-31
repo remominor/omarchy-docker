@@ -73,7 +73,7 @@ dbus-update-activation-environment --systemd \
   WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP \
   XDG_SESSION_TYPE XDG_SESSION_DESKTOP OMARCHY_PATH || true
 
-case "${OMARCHY_INPUT_MODE:-seat9}" in
+case "${OMARCHY_INPUT_MODE:-headless}" in
   bridge)
     echo "Starting input bridge; Sunshine waits for bridge readiness"
     systemctl restart omarchy-input-bridge.service
