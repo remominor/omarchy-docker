@@ -159,7 +159,7 @@ RUN set -eux; \
     for menu in \
       /usr/share/omarchy/default/omarchy/omarchy-menu.jsonc \
       /opt/omarchy-home-seed/.config/omarchy/extensions/omarchy-menu.jsonc; do \
-      sed -i '/"system\.logout":/d; /"system\.reboot":/d; /"system\.shutdown":/d' "$menu"; \
+      sed -i '/"system\.lock":/d; /"system\.suspend":/d; /"system\.hibernate":/d; /"system\.logout":/d; /"system\.reboot":/d; /"system\.shutdown":/d' "$menu"; \
     done
 
 RUN set -eux; \
