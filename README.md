@@ -282,7 +282,9 @@ project directory; override `APPDATA_PATH` when starting on another host.
 
 The image copies Omarchy's `/etc/skel` defaults into an empty persistent home
 on first boot. Existing files are not overwritten. Per-user application data
-and Flatpak installations belong in that home bind mount; image-level package
+and Flatpak installations belong in that home bind mount; the full profile
+ships Steam from Flathub because the native package's 32-bit GLX path is not
+usable in this container; image-level package
 changes require a rebuild. See [Deployment templates](docs/templates.md) for
 the update and Flatpak/proc guidance.
 

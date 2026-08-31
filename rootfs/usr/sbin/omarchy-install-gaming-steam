@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# The native Steam package currently crashes in the container's 32-bit
+# GLX/XWayland path. Use Flatpak's bundled runtime instead.
+set -euo pipefail
+
+app_id=com.valvesoftware.Steam
+echo "Configuring Flatpak Steam..."
+
+if ! flatpak info --system "$app_id" >/dev/null 2>&1 &&
+   ! flatpak info --user "$app_id" >/dev/null 2>&1; then
+  runuser -u omarchy -- flatpak --user install --noninteractive flathub "$app_id"
+fi
+
+echo "Starting Steam..."
+runuser -u omarchy -- env XDG_RUNTIME_DIR="/run/user/1000" \
+  DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus" \
+  flatpak run "$app_id" >/dev/null 2>&1 &

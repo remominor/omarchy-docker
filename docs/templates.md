@@ -92,8 +92,11 @@ Omarchy. The hook should not become a root package
 install mechanism: system packages belong in the Dockerfile/profile and the
 monthly image rebuild process.
 
-Flatpak is available in the image. Install applications as the `omarchy` user
-so they persist in the home bind mount:
+Flatpak is available in the image. The full profile includes Steam from Flathub
+because the native Steam package is incompatible with the container's 32-bit
+GLX path; Omarchy's Steam setup action launches that Flatpak. Other Flatpak
+applications should be installed as the `omarchy` user so they persist in the
+home bind mount:
 
 ```bash
 docker exec -it omarchy bash -lc \

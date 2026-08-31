@@ -100,10 +100,13 @@ RUN set -eux; \
           > /tmp/omarchy-container-full.packages; \
         pacman -S --noconfirm --needed $(cat /tmp/omarchy-container-full.packages); \
         rm -f /tmp/omarchy-container-full.packages; \
-        pacman -S --noconfirm --needed pipewire-alsa pipewire-pulse steam ;; \
+        pacman -S --noconfirm --needed pipewire-alsa pipewire-pulse ;; \
       *) echo "Unsupported OMARCHY_PROFILE=${OMARCHY_PROFILE}; use core or full" >&2; exit 2 ;; \
     esac; \
     flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo; \
+    if [[ "${OMARCHY_PROFILE}" == full ]]; then \
+      flatpak install --system --noninteractive flathub com.valvesoftware.Steam; \
+    fi; \
     userdel -r packagebuilder; \
     rm -rf /tmp/omarchy-container-stubs; \
     pacman -Scc --noconfirm
@@ -168,6 +171,7 @@ RUN set -eux; \
       /usr/local/sbin/omarchy-input-bridge-service \
       /usr/local/sbin/omarchy-input-bridge-failsafe \
       /usr/local/sbin/omarchy-start-user; \
+    chmod 0755 /usr/sbin/omarchy-install-gaming-steam; \
     chmod 0755 /usr/share/omarchy/bin/omarchy-refresh-hyprland; \
     install -Dm0755 /usr/share/omarchy/bin/omarchy-refresh-hyprland /usr/bin/omarchy-refresh-hyprland; \
     install -Dm0755 /usr/local/bin/omarchy-update-restart /usr/bin/omarchy-update-restart; \
