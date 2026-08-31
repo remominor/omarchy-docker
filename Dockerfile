@@ -171,7 +171,7 @@ RUN set -eux; \
       /usr/local/sbin/omarchy-input-bridge-service \
       /usr/local/sbin/omarchy-input-bridge-failsafe \
       /usr/local/sbin/omarchy-start-user; \
-    chmod 0755 /usr/sbin/omarchy-install-gaming-steam; \
+    chmod 0755 /usr/bin/omarchy-install-gaming-steam; \
     chmod 0755 /usr/share/omarchy/bin/omarchy-refresh-hyprland; \
     install -Dm0755 /usr/share/omarchy/bin/omarchy-refresh-hyprland /usr/bin/omarchy-refresh-hyprland; \
     install -Dm0755 /usr/local/bin/omarchy-update-restart /usr/bin/omarchy-update-restart; \
