@@ -12,7 +12,7 @@
   <Category>Productivity:</Category>
   <WebUI>https://[IP]:47990</WebUI>
   <Shell>bash</Shell>
-  <ExtraParams>--runtime=nvidia --cgroupns=host --shm-size=2g --tmpfs /run --tmpfs /run/lock --tmpfs /tmp --cap-add=SYS_ADMIN --cap-add=SYS_RESOURCE --cap-add=SYS_NICE --cap-add=IPC_LOCK --cap-add=MKNOD --cap-add=SYS_TTY_CONFIG --security-opt=seccomp=unconfined --device-cgroup-rule='c 13:* rmw' --ulimit memlock=-1 --ulimit rtprio=95</ExtraParams>
+  <ExtraParams>--runtime=nvidia --cgroupns=host --shm-size=2g --tmpfs /run --tmpfs /run/lock --tmpfs /tmp --cap-add=SYS_ADMIN --cap-add=SYS_RESOURCE --cap-add=SYS_TTY_CONFIG --cap-add=MKNOD --cap-add=NET_ADMIN --security-opt=seccomp=unconfined --device-cgroup-rule='c 13:* rmw'</ExtraParams>
   <PostArgs />
   <CPUset />
   <DateInstalled />
