@@ -46,6 +46,13 @@ chown -R "$uid:$gid" "$home" /config
 chown -R root:root /config/ssh
 chmod 0700 /config/ssh
 
+# Flatpak's bubblewrap sandbox needs a private proc mount. Docker normally
+# supplies /proc already, but some runtimes expose a restricted proc mount that
+# causes bwrap to fail with "Can't mount proc ... Operation not permitted".
+# Refresh it when the runtime permits; leaving the runtime mount in place is
+# safe when remounting is unavailable (for example under an LXC wrapper).
+mount -t proc proc /proc 2>/dev/null || true
+
 # The seat9 template mirrors Sunshine's virtual event nodes into the private
 # device namespace. Headless also runs this discovery shim because some hosts
 # (notably Unraid with a private /run tmpfs) do not propagate udev events for
@@ -54,7 +61,6 @@ input_mode="${OMARCHY_INPUT_MODE:-headless}"
 case "$input_mode" in
   headless|seat9) /usr/local/bin/omarchy-sync-input-nodes & ;;
   bridge) ;;
-  seat9) /usr/local/bin/omarchy-sync-input-nodes & ;;
   *) echo "ERROR: unsupported OMARCHY_INPUT_MODE=$input_mode" >&2; exit 2 ;;
 esac
 
