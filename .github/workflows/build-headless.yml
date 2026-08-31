@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: build-headless
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -34,6 +38,7 @@ jobs:
           tags: |
             type=raw,value=latest
             type=raw,value=headless
+            type=sha,prefix=sha-
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3

@@ -5,22 +5,27 @@
   <Registry>https://github.com/remominor/omarchy-docker</Registry>
   <Network>host</Network>
   <MyIP></MyIP>
-  <Privileged>true</Privileged>
+  <Privileged>false</Privileged>
   <Support>https://github.com/remominor/omarchy-docker/issues</Support>
   <Project>https://github.com/remominor/omarchy-docker</Project>
-  <Overview>Headless Omarchy/Hyprland desktop streamed through Sunshine and Moonlight. This Unraid template follows the simple headless profile: privileged mode and host networking provide the virtual desktop and standard Sunshine ports without a host seat rule or input bridge. Use this profile when the Unraid host does not need another Sunshine instance on the same IP. For non-privileged bridge or seat9 isolation, use the corresponding Compose template.</Overview>
+  <Overview>Headless Omarchy/Hyprland desktop streamed through Sunshine and Moonlight. This Unraid template uses host networking and an explicit non-privileged device/capability set for the virtual desktop, GPU rendering, Sunshine input, systemd, and Flatpak support. No host seat rule or input bridge is required. Use this profile when the Unraid host does not need another Sunshine instance on the same IP.</Overview>
   <Category>Productivity:</Category>
   <WebUI>https://[IP]:47990</WebUI>
   <Shell>bash</Shell>
-  <ExtraParams>--runtime=nvidia --cgroupns=host --shm-size=2g --tmpfs /run --tmpfs /run/lock --tmpfs /tmp</ExtraParams>
+  <ExtraParams>--runtime=nvidia --cgroupns=host --shm-size=2g --tmpfs /run --tmpfs /run/lock --tmpfs /tmp --cap-add=SYS_ADMIN --cap-add=SYS_RESOURCE --cap-add=SYS_NICE --cap-add=IPC_LOCK --cap-add=MKNOD --cap-add=SYS_TTY_CONFIG --security-opt=seccomp=unconfined --device-cgroup-rule='c 13:* rmw' --ulimit memlock=-1 --ulimit rtprio=95</ExtraParams>
   <PostArgs />
   <CPUset />
   <DateInstalled />
   <DonateText />
   <DonateLink />
-  <Requires>NVIDIA Container Toolkit. This template pulls the published headless image from ghcr.io/remominor/omarchy-docker:headless. Host networking is intentional so Sunshine retains its standard ports. Stop any other Sunshine instance using those ports, or use a dedicated custom-network IP with one of the non-headless Compose profiles. No Omarchy-specific host udev rule or host service is required.</Requires>
+  <Requires>NVIDIA Container Toolkit and host devices /dev/dri, /dev/uinput, /dev/tty0, /dev/tty1, and /dev/fuse. This template pulls the published headless image from ghcr.io/remominor/omarchy-docker:headless and runs without privileged mode. Host networking is intentional so Sunshine retains its standard ports. Stop any other Sunshine instance using those ports, or use a dedicated custom-network IP. No Omarchy-specific host udev rule or host service is required.</Requires>
   <Config Name="Omarchy home" Target="/home/omarchy" Default="/mnt/user/appdata/omarchy-docker/home" Mode="rw" Description="Persistent Omarchy user home." Type="Path" Display="always" Required="true" Mask="false" />
   <Config Name="Sunshine configuration" Target="/config" Default="/mnt/user/appdata/omarchy-docker/sunshine" Mode="rw" Description="Persistent Sunshine credentials, pairing state, and configuration." Type="Path" Display="always" Required="true" Mask="false" />
+  <Config Name="DRM devices" Target="/dev/dri" Default="/dev/dri" Mode="rw" Description="GPU DRM devices required by Hyprland and Sunshine rendering." Type="Device" Display="advanced" Required="true" Mask="false" />
+  <Config Name="uinput device" Target="/dev/uinput" Default="/dev/uinput" Mode="rw" Description="Virtual input device used by Sunshine keyboard and mouse injection." Type="Device" Display="advanced" Required="true" Mask="false" />
+  <Config Name="Virtual terminal 0" Target="/dev/tty0" Default="/dev/tty0" Mode="rw" Description="VT access required by seatd during compositor startup." Type="Device" Display="advanced" Required="true" Mask="false" />
+  <Config Name="Virtual terminal 1" Target="/dev/tty1" Default="/dev/tty1" Mode="rw" Description="VT access required by seatd during compositor startup." Type="Device" Display="advanced" Required="true" Mask="false" />
+  <Config Name="FUSE device" Target="/dev/fuse" Default="/dev/fuse" Mode="rw" Description="FUSE support for Flatpak and user-space filesystem integration." Type="Device" Display="advanced" Required="true" Mask="false" />
   <Config Name="Host cgroup" Target="/sys/fs/cgroup" Default="/sys/fs/cgroup" Mode="rw" Description="Host cgroup hierarchy required by systemd in the container." Type="Path" Display="advanced" Required="true" Mask="false" />
   <Config Name="NVIDIA GPU" Target="NVIDIA_VISIBLE_DEVICES" Default="GPU-REPLACE-ME" Mode="" Description="UUID of the NVIDIA GPU assigned to Omarchy. Find it with nvidia-smi." Type="Variable" Display="always" Required="true" Mask="false" />
   <Config Name="NVIDIA capabilities" Target="NVIDIA_DRIVER_CAPABILITIES" Default="all" Mode="" Description="Driver capabilities injected by NVIDIA Container Toolkit." Type="Variable" Display="advanced" Required="true" Mask="false" />

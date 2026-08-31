@@ -112,6 +112,10 @@ RUN set -eux; \
 # Omarchy editor launcher supports it.
 RUN pacman -S --noconfirm --needed nano less
 
+# NVIDIA Container Toolkit injects these host-driver files at runtime. Keep
+# pacman from trying to claim the injected paths during Omarchy updates.
+RUN printf '\n# NVIDIA runtime supplies these packages at container runtime\nIgnorePkg = nvidia-utils egl-gbm egl-wayland2\n' >> /etc/pacman.conf
+
 # Omarchy's current Sunshine build omits the CUDA wlroots-to-NVENC path.
 # Install LizardByte's matching Arch release instead, with an immutable URL
 # and verified digest, so NVIDIA containers retain hardware encoding.
