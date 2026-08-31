@@ -46,6 +46,17 @@ chown -R "$uid:$gid" "$home" /config
 chown -R root:root /config/ssh
 chmod 0700 /config/ssh
 
+# Persist the user's explicit SSH setup across container recreation. The
+# Omarchy setup command enables sshd in /etc, which is image/container state;
+# an authorized key in the persistent home is the opt-in signal we can safely
+# carry forward.
+if [[ -s "$home/.ssh/authorized_keys" ]]; then
+  touch /config/ssh/enabled
+fi
+if [[ -e /config/ssh/enabled ]]; then
+  systemctl enable sshd.service >/dev/null 2>&1 || true
+fi
+
 # Flatpak's bubblewrap sandbox needs a private proc mount. Docker normally
 # supplies /proc already, but some runtimes expose a restricted proc mount that
 # causes bwrap to fail with "Can't mount proc ... Operation not permitted".
