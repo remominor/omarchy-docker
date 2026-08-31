@@ -67,6 +67,8 @@ profile. It is intentionally manual and is not a bridge acceptance gate.
   authorized key must remain SSH-disabled.
 - [ ] Reconnect Moonlight repeatedly and check for stale sessions or stuck
   keyboard/pointer buttons.
+- [ ] Confirm startup logs report `/dev/uinput is available`; if it is missing,
+  Sunshine cannot create virtual keyboard, mouse, or gamepad devices.
 - [ ] For `bridge`, run `omarchy-container-check` and confirm `/host/input` is
   read-only and bridge readiness is published.
 - [ ] For `seat9`, verify the host rule is installed and host input remains

@@ -57,6 +57,17 @@ if [[ -e /config/ssh/enabled ]]; then
   systemctl enable sshd.service >/dev/null 2>&1 || true
 fi
 
+# Sunshine creates its virtual keyboard, mouse, and gamepad through uinput.
+# The device is supplied by the host kernel; normalize access when it exists
+# and make a clear diagnostic available when the host did not expose it.
+if [[ -c /dev/uinput ]]; then
+  chmod 0660 /dev/uinput 2>/dev/null || true
+  chgrp input /dev/uinput 2>/dev/null || true
+  echo "[omarchy-input] /dev/uinput is available ($(stat -c '%A %G' /dev/uinput 2>/dev/null || true))"
+else
+  echo "[omarchy-input] WARNING: /dev/uinput is missing; Sunshine virtual keyboard/mouse/gamepad input will not work. Expose the host uinput device or install the host's equivalent uinput support." >&2
+fi
+
 # Flatpak's bubblewrap sandbox needs a private proc mount. Docker normally
 # supplies /proc already, but some runtimes expose a restricted proc mount that
 # causes bwrap to fail with "Can't mount proc ... Operation not permitted".
