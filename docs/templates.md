@@ -6,7 +6,7 @@ selects the input topology.
 
 | File | Use when | Host input requirement | Special mapping |
 |---|---|---|---|
-| `compose.headless.yml` | Virtual input is sufficient | None | `/run/udev` read-only; host networking |
+| `compose.headless.yml` | Virtual input is sufficient | None | `/run/udev` read-only; published Sunshine ports |
 | `compose.bridge.yml` | Physical keyboard/mouse must be grabbed exclusively | None | `/dev/input` read-only at `/host/input` |
 | `compose.seat9.yml` | Existing seat9 isolation is preferred | Install `host/72-omarchy-sunshine-seat.rules` | No host `/dev/input` mapping |
 
@@ -33,13 +33,13 @@ docker compose --env-file .env -f compose.seat9.yml up -d --build
 
 ## Sunshine networking
 
-The bridge and seat9 templates publish Sunshine's standard ports. If the host
-already runs Sunshine, place the container on a custom Docker network with its
-own LAN-reachable IP (for example a macvlan/ipvlan or Unraid custom network)
-and keep the standard ports on that IP. Changing Sunshine to arbitrary host
-ports is not a reliable workaround because some Moonlight clients expect the
-standard port set. Host networking is appropriate for the headless template
-only when no other Sunshine instance needs those ports.
+All Compose templates publish Sunshine's standard ports. If the host already
+runs Sunshine, create a custom Docker network with its own LAN-reachable IP
+(for example a macvlan/ipvlan or Unraid custom network) and attach the
+container to it; then the ports are available directly on that IP without
+host-port conflicts. A user-defined bridge network still requires the listed
+port mappings. Changing Sunshine to arbitrary host ports is not a reliable
+workaround because some Moonlight clients expect the standard port set.
 
 ## Useful Omarchy checks
 

@@ -3,12 +3,12 @@
   <Name>omarchy-docker</Name>
   <Repository>ghcr.io/remominor/omarchy-docker:headless</Repository>
   <Registry>https://github.com/remominor/omarchy-docker</Registry>
-  <Network>host</Network>
+  <Network>br0</Network>
   <MyIP></MyIP>
   <Privileged>false</Privileged>
   <Support>https://github.com/remominor/omarchy-docker/issues</Support>
   <Project>https://github.com/remominor/omarchy-docker</Project>
-  <Overview>Headless Omarchy/Hyprland desktop streamed through Sunshine and Moonlight. This Unraid template uses host networking and an explicit non-privileged device/capability set for the virtual desktop, GPU rendering, Sunshine input, systemd, and Flatpak support. No host seat rule or input bridge is required. Use this profile when the Unraid host does not need another Sunshine instance on the same IP.</Overview>
+  <Overview>Headless Omarchy/Hyprland desktop streamed through Sunshine and Moonlight. This Unraid template uses an Unraid custom LAN network (br0 by default) and an explicit non-privileged device/capability set for the virtual desktop, GPU rendering, Sunshine input, systemd, and Flatpak support. Assign a dedicated IP so Sunshine and future services do not conflict with the host. No host seat rule or input bridge is required.</Overview>
   <Category>Productivity:</Category>
   <WebUI>https://[IP]:47990</WebUI>
   <Shell>bash</Shell>
@@ -18,7 +18,7 @@
   <DateInstalled />
   <DonateText />
   <DonateLink />
-  <Requires>NVIDIA Container Toolkit and host devices /dev/dri, /dev/uinput, /dev/tty0, /dev/tty1, and /dev/fuse. This template pulls the published headless image from ghcr.io/remominor/omarchy-docker:headless and runs without privileged mode. Host networking is intentional so Sunshine retains its standard ports. Stop any other Sunshine instance using those ports, or use a dedicated custom-network IP. No Omarchy-specific host udev rule or host service is required.</Requires>
+  <Requires>NVIDIA Container Toolkit and host devices /dev/dri, /dev/uinput, /dev/tty0, /dev/tty1, and /dev/fuse. This template pulls the published headless image from ghcr.io/remominor/omarchy-docker:headless and runs without privileged mode. Use an Unraid custom LAN network with a dedicated IP so Sunshine retains its standard ports without conflicting with host services. No Omarchy-specific host udev rule or host service is required.</Requires>
   <Config Name="Omarchy home" Target="/home/omarchy" Default="/mnt/user/appdata/omarchy-docker/home" Mode="rw" Description="Persistent Omarchy user home." Type="Path" Display="always" Required="true" Mask="false" />
   <Config Name="Sunshine configuration" Target="/config" Default="/mnt/user/appdata/omarchy-docker/sunshine" Mode="rw" Description="Persistent Sunshine credentials, pairing state, and configuration." Type="Path" Display="always" Required="true" Mask="false" />
   <Config Name="DRM devices" Target="/dev/dri" Default="/dev/dri" Mode="rw" Description="GPU DRM devices required by Hyprland and Sunshine rendering." Type="Device" Display="advanced" Required="true" Mask="false" />

@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
     runtime: nvidia
     cgroup: host
-    network_mode: host
+    ports: ["47984-47990:47984-47990/tcp", "48010:48010/tcp", "47998-48000:47998-48000/udp"]
     privileged: true
     environment:
       OMARCHY_INPUT_MODE: headless
