@@ -44,6 +44,10 @@ scrolling reached Omarchy without driving the host desktop. Pointer smoothness
 was corrected by moving discovery out of the motion path. The container stayed
 non-privileged and the normal display/capture path remained intact.
 
+Sunshine gamepad input is also verified with a macOS DualSense client. The
+bridge profile mirrors the gamepad event node separately so Steam sees it
+without duplicating the bridge keyboard and mouse devices.
+
 The bridge binary builds from pinned Wayland protocol inputs, and all three
 Compose templates and shell scripts validate.
 

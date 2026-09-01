@@ -75,7 +75,8 @@ and compositor implementation should not be copied into this image.
 - Keyboard, pointer motion, and clicks are verified through Moonlight without
   reaching the CachyOS KDE host, including while an RDP session remains
   active. Both Sunshine mouse devices are attached to Hyprland.
-- Controller input remains to be verified.
+- Controller input is verified through Moonlight with a macOS DualSense client;
+  Sunshine's virtual gamepad is mirrored into the container for Steam.
 - The bridge input path is the default development path; seat9 remains an
   alternative template for hosts that already use the seat rule.
 - Only after the dedicated-GPU path passes, test coexistence and then optional
@@ -113,8 +114,9 @@ and compositor implementation should not be copied into this image.
 - [x] Omarchy desktop is visible before a streaming client connects.
 - [x] Sunshine captures through Wayland and initializes NVENC.
 - [x] Moonlight video, keyboard, and mouse work.
-- [ ] Moonlight audio works through `omarchy_stream.monitor`.
-- [ ] Moonlight controller input works.
+- [x] Moonlight audio works through `omarchy_stream.monitor`.
+- [x] Moonlight controller input works, including a macOS DualSense client.
+- [x] Flatpak Steam installs and launches games in native Linux and Proton modes.
 - [x] Persistent home and Sunshine credentials survive recreation.
 - [x] CachyOS bridge Compose and dedicated-IP Unraid XML deployment modes are
       documented separately.
