@@ -1,0 +1,12 @@
+ARG BASE_IMAGE=local/omarchy-base:dev
+FROM ${BASE_IMAGE}
+
+LABEL org.opencontainers.image.description="Omarchy Docker Flatpak Steam test variant"
+
+# Flatpak supplies a host-driver-matched GL/GL32 runtime extension, avoiding
+# NVIDIA Container Toolkit's current JIT-CDI compat32 discovery omission.
+RUN set -eux; \
+    flatpak remote-add --if-not-exists flathub \
+      https://flathub.org/repo/flathub.flatpakrepo; \
+    flatpak install --system --noninteractive flathub com.valvesoftware.Steam
+

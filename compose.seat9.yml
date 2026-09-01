@@ -5,7 +5,7 @@ services:
       args:
         OMARCHY_CHANNEL: ${OMARCHY_CHANNEL:-stable}
         OMARCHY_PROFILE: ${OMARCHY_PROFILE:-full}
-    image: local/omarchy-seat9:latest
+    image: ${OMARCHY_IMAGE:-local/omarchy-seat9:latest}
     container_name: omarchy
     hostname: omarchy
     restart: unless-stopped

@@ -1,0 +1,26 @@
+ARG BASE_IMAGE=local/omarchy-base:dev
+FROM ${BASE_IMAGE}
+
+LABEL org.opencontainers.image.description="Omarchy Docker native Arch Steam test variant"
+
+# This is intentionally a diagnostic image. The active repository's compat32
+# NVIDIA package is baked into the image while the 64-bit driver remains
+# supplied by NVIDIA Container Toolkit. It is expected to fail when those
+# versions differ, and can be compared with dockerfile.flatpak-steam.
+RUN set -eux; \
+    flatpak uninstall --system --noninteractive com.valvesoftware.Steam || true; \
+    rm -rf /var/lib/flatpak/app/com.valvesoftware.Steam; \
+    find /var/lib/flatpak/exports -type l \
+      -lname '*com.valvesoftware.Steam*' -delete; \
+    pacman -Syy --noconfirm; \
+    compat_version="$(pacman -Si lib32-nvidia-utils | awk '/^Version/{print $3; exit}')"; \
+    test -n "${compat_version}"; \
+    pacman -S --noconfirm --needed \
+      --assume-installed "nvidia-utils=${compat_version}" \
+      --assume-installed 'vulkan-driver=1' \
+      steam lib32-mesa-utils lib32-nvidia-utils; \
+    pacman -Scc --noconfirm
+
+COPY tests/steam/omarchy-install-gaming-steam-native \
+  /usr/bin/omarchy-install-gaming-steam
+RUN chmod 0755 /usr/bin/omarchy-install-gaming-steam

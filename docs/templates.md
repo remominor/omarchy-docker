@@ -133,6 +133,31 @@ the matching `lib32-nvidia-utils 610.57.04` made `glxinfo32` pass and native
 Steam successfully opened its sign-in window. This confirms a driver-library
 version mismatch rather than a fundamental Xwayland or Hyprland limitation.
 
+The missing host-matched 32-bit stack is a confirmed NVIDIA Container Toolkit
+CDI discovery defect, not an Arch `/usr/lib32` layout problem. Toolkit `1.18.0`
+changed `auto` mode from the legacy injection path to just-in-time CDI. The
+released CDI locator reads the host linker cache but discards its 32-bit result,
+even when `NVIDIA_DRIVER_CAPABILITIES=all` requests `compat32`. The legacy
+`nvidia-container-cli --compat32` path still discovers the same host files.
+
+NVIDIA's open
+[`nvidia-container-toolkit` PR #2035](https://github.com/NVIDIA/nvidia-container-toolkit/pull/2035)
+adds the omitted 32-bit linker-cache entries to CDI discovery and explicitly
+targets Steam, Proton, 32-bit Vulkan, CUDA, and VDPAU consumers. It supersedes
+[PR #1968](https://github.com/NVIDIA/nvidia-container-toolkit/pull/1968) and
+has not yet shipped in a toolkit release. NVIDIA's
+[runtime documentation](https://github.com/NVIDIA/nvidia-container-toolkit/blob/main/cmd/nvidia-container-runtime/README.md)
+defines `compat32` as required for 32-bit applications, while the
+[1.18 release notes](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/release-notes.html)
+record the switch to JIT-CDI as the default runtime mode.
+
+The proposed fix was also compiled locally from PR #2035 and used to generate
+a temporary CDI specification against an Arch host with driver `610.57.04`.
+The released `1.20.0` path produced no compat32 mounts; the patched generator
+produced 22 `/usr/lib32` mounts, including matching `libGLX_nvidia`, `libcuda`,
+`libnvidia-glcore`, and `libnvidia-tls`. This verifies the proposed discovery
+fix without replacing the host's installed container runtime.
+
 Pacman can also choose an unrelated generic Vulkan provider when
 `nvidia-utils` is excluded, because it does not know that NVIDIA Container
 Toolkit has already supplied the 64-bit implementation. Forcing packages with
@@ -153,7 +178,54 @@ that exact NVIDIA driver branch. Dynamically downloading a matching package is
 also fragile because the version may no longer be in the current repositories
 and would mutate the container system layer. Flatpak Steam remains the
 supported portable default. Native Steam is an advanced, host-driver-specific
-experiment until a reliable 32-bit NVIDIA injection mechanism is available.
+experiment until NVIDIA ships the CDI fix broadly.
+
+### Steam comparison images
+
+Two thin diagnostic Dockerfiles allow the same Omarchy base image to be tested
+with either Steam packaging path without duplicating the main image build:
+
+- `dockerfile.flatpak-steam` keeps Steam from Flathub and its matching NVIDIA
+  GL/GL32 runtime extensions.
+- `dockerfile.native-steam` installs Arch Steam plus the repository's current
+  `lib32-nvidia-utils`, while leaving the 64-bit driver to NVIDIA Container
+  Toolkit. A host/repository version mismatch is intentionally visible in this
+  image rather than hidden.
+
+Build the common base and both variants:
+
+```bash
+docker build -t local/omarchy-base:dev .
+docker build -f dockerfile.flatpak-steam \
+  --build-arg BASE_IMAGE=local/omarchy-base:dev \
+  -t local/omarchy-flatpak-steam:test .
+docker build -f dockerfile.native-steam \
+  --build-arg BASE_IMAGE=local/omarchy-base:dev \
+  -t local/omarchy-native-steam:test .
+```
+
+Every Compose template accepts `OMARCHY_IMAGE` for selecting a prebuilt test
+image. Do not pass `--build` for this step, because that would rebuild the main
+Dockerfile over the selected tag:
+
+```bash
+OMARCHY_IMAGE=local/omarchy-flatpak-steam:test \
+  docker compose --env-file .env -f compose.bridge.yml \
+  up -d --no-build --force-recreate
+
+# Switch the same persistent desktop to the native comparison image.
+OMARCHY_IMAGE=local/omarchy-native-steam:test \
+  docker compose --env-file .env -f compose.bridge.yml \
+  up -d --no-build --force-recreate
+```
+
+For the native image, record all three values before testing Steam:
+
+```bash
+nvidia-smi --query-gpu=driver_version --format=csv,noheader
+pacman -Q lib32-nvidia-utils
+glxinfo32 -B
+```
 
 Monthly Omarchy releases should produce a new image from `main`; live CVE
 patches can be installed for testing, then incorporated into the next image

@@ -288,7 +288,8 @@ driver. Native Steam was verified to work only after its 32-bit NVIDIA library
 was made to exactly match the injected host driver; Pacman cannot guarantee
 that match in a portable image. Image-level package changes require a rebuild.
 See [Deployment templates](docs/templates.md#why-native-steam-is-not-the-default)
-for the diagnosis and the update, persistence, and Flatpak guidance.
+for the confirmed NVIDIA JIT-CDI compat32 diagnosis, the two Steam comparison
+images, and the update, persistence, and Flatpak guidance.
 
 For a clean retry, stop and remove the container, move the two persistent
 directories aside, then recreate it from Compose or DockerMan. Moving them

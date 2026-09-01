@@ -119,7 +119,9 @@ and compositor implementation should not be copied into this image.
 - [x] Flatpak Steam installs and launches games in native Linux and Proton modes.
 - [x] Native Steam's GLX crash is diagnosed as a mismatched 32-bit NVIDIA
       userspace; matching it to the injected host driver opens the Steam UI,
-      but is not portable enough to replace Flatpak as the default.
+      and NVIDIA's open JIT-CDI compat32 fix identifies the upstream cause.
+- [x] Flatpak and native Steam comparison Dockerfiles provide reproducible
+      packaging and driver-compatibility test images from one Omarchy base.
 - [x] Persistent home and Sunshine credentials survive recreation.
 - [x] CachyOS bridge Compose and dedicated-IP Unraid XML deployment modes are
       documented separately.
