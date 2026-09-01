@@ -104,9 +104,6 @@ RUN set -eux; \
       *) echo "Unsupported OMARCHY_PROFILE=${OMARCHY_PROFILE}; use core or full" >&2; exit 2 ;; \
     esac; \
     flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo; \
-    if [[ "${OMARCHY_PROFILE}" == full ]]; then \
-      flatpak install --system --noninteractive flathub com.valvesoftware.Steam; \
-    fi; \
     userdel -r packagebuilder; \
     rm -rf /tmp/omarchy-container-stubs; \
     pacman -Scc --noconfirm
@@ -154,14 +151,12 @@ RUN set -eux; \
 COPY rootfs/ /
 COPY src/input-bridge/ /tmp/omarchy-input-bridge/
 
-# Reboot and shutdown would target the container's shared host kernel. Remove
-# those actions from seeded Omarchy menus and block the commands defensively.
-RUN set -eux; \
-    for menu in \
+# Reboot, shutdown, and sleep actions do not make sense inside this container.
+# This also adds the persistent Flatpak Steam choice without replacing
+# Omarchy's native Steam installer.
+RUN /usr/bin/bash /usr/local/sbin/omarchy-container-patch-menu \
       /usr/share/omarchy/default/omarchy/omarchy-menu.jsonc \
-      /opt/omarchy-home-seed/.config/omarchy/extensions/omarchy-menu.jsonc; do \
-      sed -i '/"system\.lock":/d; /"system\.suspend":/d; /"system\.hibernate":/d; /"system\.logout":/d; /"system\.reboot":/d; /"system\.shutdown":/d' "$menu"; \
-    done
+      /opt/omarchy-home-seed/.config/omarchy/extensions/omarchy-menu.jsonc
 
 RUN set -eux; \
     make -C /tmp/omarchy-input-bridge install; \
@@ -180,10 +175,14 @@ RUN set -eux; \
       /usr/local/bin/omarchy-system-reboot \
       /usr/local/bin/omarchy-system-shutdown \
       /usr/local/sbin/omarchy-container-init \
+      /usr/local/sbin/omarchy-container-patch-menu \
       /usr/local/sbin/omarchy-input-bridge-service \
       /usr/local/sbin/omarchy-input-bridge-failsafe \
       /usr/local/sbin/omarchy-start-user; \
-    chmod 0755 /usr/bin/omarchy-install-gaming-steam; \
+    chmod 0755 \
+      /usr/bin/omarchy-install-gaming-steam \
+      /usr/bin/omarchy-install-gaming-steam-flatpak \
+      /usr/bin/omarchy-remove-gaming-steam-flatpak; \
     chmod 0755 /usr/share/omarchy/bin/omarchy-refresh-hyprland; \
     install -Dm0755 /usr/share/omarchy/bin/omarchy-refresh-hyprland /usr/bin/omarchy-refresh-hyprland; \
     install -Dm0755 /usr/local/bin/omarchy-update-restart /usr/bin/omarchy-update-restart; \

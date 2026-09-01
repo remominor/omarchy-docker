@@ -42,6 +42,13 @@ if [[ ! -e "$home/.omarchy-container-seeded" ]]; then
   cp -a "$seed"/. "$home"/
   touch "$home/.omarchy-container-seeded"
 fi
+
+# Apply narrowly scoped container menu additions to existing persistent homes
+# as well as newly seeded ones. The patch is idempotent and preserves all
+# unrelated user menu customizations.
+/usr/local/sbin/omarchy-container-patch-menu \
+  "$home/.config/omarchy/extensions/omarchy-menu.jsonc"
+
 chown -R "$uid:$gid" "$home" /config
 chown -R root:root /config/ssh
 chmod 0700 /config/ssh

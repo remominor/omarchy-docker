@@ -1,0 +1,16 @@
+#!/bin/bash
+# omarchy:summary=Install persistent Steam from Flathub for the current user
+
+set -euo pipefail
+
+app_id=com.valvesoftware.Steam
+
+echo "Installing persistent Flatpak Steam..."
+flatpak remote-add --user --if-not-exists \
+  flathub https://flathub.org/repo/flathub.flatpakrepo
+flatpak install --user --noninteractive flathub "$app_id"
+
+echo ""
+echo "Steam and its application data are stored under your persistent home."
+echo "Starting Steam..."
+setsid flatpak run "$app_id" >/dev/null 2>&1 &

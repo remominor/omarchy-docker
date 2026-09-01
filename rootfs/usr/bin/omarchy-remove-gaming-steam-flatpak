@@ -1,0 +1,13 @@
+#!/bin/bash
+# omarchy:summary=Remove persistent Flatpak Steam while retaining its user data
+
+set -euo pipefail
+
+app_id=com.valvesoftware.Steam
+
+flatpak uninstall --user --noninteractive "$app_id"
+
+echo ""
+echo "Flatpak Steam was removed. Its data remains in:"
+echo "  $HOME/.var/app/$app_id"
+echo "Remove that directory manually only if you also want to delete its data."

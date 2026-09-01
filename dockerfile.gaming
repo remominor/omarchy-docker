@@ -1,0 +1,34 @@
+ARG BASE_IMAGE=local/omarchy-base:dev
+FROM ${BASE_IMAGE}
+
+# Native Steam and UMU require generic 32-bit Vulkan providers. NVIDIA's
+# actual vendor libraries must still come from the host driver through the
+# NVIDIA Container Toolkit; baking a particular driver version into this image
+# would make it less portable and risks a userspace/kernel mismatch.
+RUN set -eux; \
+    useradd -m -s /bin/bash gaming-packagebuilder; \
+    install -d -o gaming-packagebuilder -g gaming-packagebuilder \
+      /tmp/omarchy-container-gpu-runtime; \
+    printf '%s\n' \
+      'pkgname=omarchy-container-gpu-runtime' \
+      'pkgver=1' \
+      'pkgrel=1' \
+      'pkgdesc="Virtual Vulkan providers supplied by the container runtime"' \
+      'arch=("any")' \
+      'provides=("vulkan-driver" "lib32-vulkan-driver")' \
+      'package() { install -Dm0644 /dev/null "$pkgdir/usr/share/omarchy-container/gpu-runtime-provider"; }' \
+      > /tmp/omarchy-container-gpu-runtime/PKGBUILD; \
+    runuser -u gaming-packagebuilder -- bash -lc \
+      'cd /tmp/omarchy-container-gpu-runtime && makepkg --noconfirm'; \
+    pacman -U --noconfirm \
+      /tmp/omarchy-container-gpu-runtime/omarchy-container-gpu-runtime-1-1-any.pkg.tar.*; \
+    pacman -S --noconfirm --needed \
+      steam umu-launcher \
+      gamescope mangohud lib32-mangohud \
+      gamemode lib32-gamemode; \
+    usermod -aG gamemode omarchy; \
+    userdel -r gaming-packagebuilder; \
+    rm -rf /tmp/omarchy-container-gpu-runtime; \
+    pacman -Scc --noconfirm
+
+LABEL org.opencontainers.image.description="Omarchy Docker gaming variant with native Steam, UMU, Gamescope, MangoHud, and GameMode"

@@ -122,6 +122,11 @@ and compositor implementation should not be copied into this image.
       and NVIDIA's open JIT-CDI compat32 fix identifies the upstream cause.
 - [x] Flatpak and native Steam comparison Dockerfiles provide reproducible
       packaging and driver-compatibility test images from one Omarchy base.
+- [x] General images retain Omarchy's native Steam action and add a separate
+      persistent per-user Flatpak Steam action without preinstalling either.
+- [ ] Validate the native gaming image (Steam, UMU, Gamescope, MangoHud, and
+      GameMode) with host-matched compat32 libraries after NVIDIA releases the
+      corrected JIT-CDI discovery path.
 - [x] Persistent home and Sunshine credentials survive recreation.
 - [x] CachyOS bridge Compose and dedicated-IP Unraid XML deployment modes are
       documented separately.

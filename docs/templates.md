@@ -98,11 +98,17 @@ Omarchy. The hook should not become a root package
 install mechanism: system packages belong in the Dockerfile/profile and the
 monthly image rebuild process.
 
-Flatpak is available in the image. The full profile includes Steam from Flathub
-because it can select an NVIDIA runtime extension that matches the active host
-driver; Omarchy's Steam setup action launches that Flatpak. Other Flatpak
-applications should be installed as the `omarchy` user so they persist in the
-home bind mount:
+Flatpak is available in the image, but the general image does not preinstall a
+Steam implementation. Omarchy's Install menu exposes two distinct choices:
+
+- **Steam (native)** retains Omarchy's original Pacman installer. The package
+  is container-layer state and must be reinstalled after image recreation.
+- **Steam (Flatpak, persistent)** installs the application and its data under
+  `/home/omarchy`, so both survive recreation. This is the recommended NVIDIA
+  path until the host runtime supplies matching 32-bit driver libraries.
+
+Other Flatpak applications should also be installed as the `omarchy` user so
+they persist in the home bind mount:
 
 ```bash
 docker exec -it omarchy bash -lc \
@@ -173,12 +179,13 @@ pacman -Q | grep -E 'lib32-(nvidia|libglvnd|mesa)'
 glxinfo32 -B
 ```
 
-A native package baked into a generic image would only work for hosts using
-that exact NVIDIA driver branch. Dynamically downloading a matching package is
-also fragile because the version may no longer be in the current repositories
-and would mutate the container system layer. Flatpak Steam remains the
-supported portable default. Native Steam is an advanced, host-driver-specific
-experiment until NVIDIA ships the CDI fix broadly.
+A native driver package baked into a generic image would only work for hosts
+using that exact NVIDIA driver branch. Dynamically downloading a matching
+package is also fragile because the version may no longer be in the current
+repositories and would mutate the container system layer. The menu's
+persistent Flatpak Steam option remains the supported portable path. Native
+Steam is an advanced, host-driver-specific experiment until NVIDIA ships the
+CDI fix broadly.
 
 ### Steam comparison images
 
@@ -226,6 +233,39 @@ nvidia-smi --query-gpu=driver_version --format=csv,noheader
 pacman -Q lib32-nvidia-utils
 glxinfo32 -B
 ```
+
+### Gaming image variant
+
+`dockerfile.gaming` is the native-package gaming variant. It layers Steam, UMU
+Launcher, Gamescope, MangoHud (64/32-bit), and GameMode (64/32-bit) over the
+normal full Omarchy image.
+
+It installs a deliberately empty Pacman provider for `vulkan-driver` and
+`lib32-vulkan-driver`. This records that the vendor implementation is owned by
+the container runtime and avoids baking a host-specific NVIDIA driver into the
+image. It does not manufacture missing libraries: on NVIDIA, the host must use
+a Container Toolkit release containing the JIT-CDI compat32 fix (or an
+equivalent corrected CDI specification) before native Steam/UMU can be
+considered supported.
+
+Build and select it with:
+
+```bash
+docker build -t local/omarchy-base:dev .
+docker build -f dockerfile.gaming \
+  --build-arg BASE_IMAGE=local/omarchy-base:dev \
+  -t local/omarchy-gaming:test .
+./tests/smoke-gaming-image.sh local/omarchy-gaming:test
+
+OMARCHY_IMAGE=local/omarchy-gaming:test \
+  docker compose --env-file .env -f compose.bridge.yml \
+  up -d --no-build --force-recreate
+```
+
+The Flatpak Steam menu choice remains present in the gaming image as a
+portable fallback. Native packages are baked and reproducible; game libraries,
+Steam state, UMU prefixes, and user configuration remain under the persistent
+home mapping.
 
 Monthly Omarchy releases should produce a new image from `main`; live CVE
 patches can be installed for testing, then incorporated into the next image

@@ -1,0 +1,39 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+patch_menu() {
+  local menu="$1"
+  [[ -f "$menu" ]] || return 0
+
+  # These host-level power/session actions are ineffective or unsafe in a
+  # container. Screensaver remains available.
+  sed -i \
+    '/"system\.lock":/d; /"system\.suspend":/d; /"system\.hibernate":/d; /"system\.logout":/d; /"system\.reboot":/d; /"system\.shutdown":/d' \
+    "$menu"
+
+  # Make the package-managed installer explicit while retaining Omarchy's
+  # original action and package detection.
+  sed -i \
+    's/"install\.gaming\.steam": {"icon":"","label":"Steam",/"install.gaming.steam": {"icon":"","label":"Steam (native)",/' \
+    "$menu"
+  sed -i \
+    's/"remove\.gaming\.steam": {"icon":"","label":"Steam",/"remove.gaming.steam": {"icon":"","label":"Steam (native)",/' \
+    "$menu"
+
+  if ! grep -Fq '"install.gaming.steam-flatpak":' "$menu"; then
+    sed -i '/"install\.gaming\.steam":/a\  "install.gaming.steam-flatpak": {"icon":"","label":"Steam (Flatpak, persistent)","when":"! flatpak --user info com.valvesoftware.Steam >/dev/null 2>\&1","action":"omarchy-launch-floating-terminal-with-presentation omarchy-install-gaming-steam-flatpak"},' "$menu"
+  fi
+
+  if ! grep -Fq '"remove.gaming.steam-flatpak":' "$menu"; then
+    sed -i '/"remove\.gaming\.steam":/a\  "remove.gaming.steam-flatpak": {"icon":"","label":"Steam (Flatpak, persistent)","when":"flatpak --user info com.valvesoftware.Steam >/dev/null 2>\&1","action":"omarchy-launch-floating-terminal-with-presentation omarchy-remove-gaming-steam-flatpak"},' "$menu"
+  fi
+}
+
+if (( $# )); then
+  for menu in "$@"; do
+    patch_menu "$menu"
+  done
+else
+  patch_menu /usr/share/omarchy/default/omarchy/omarchy-menu.jsonc
+  patch_menu /home/omarchy/.config/omarchy/extensions/omarchy-menu.jsonc
+fi

@@ -25,7 +25,10 @@ for path in \
   /usr/local/bin/omarchy-sync-input-nodes \
   /usr/local/bin/omarchy-container-check \
   /usr/local/bin/omarchy-audio-init \
+  /usr/bin/omarchy-install-gaming-steam-flatpak \
+  /usr/bin/omarchy-remove-gaming-steam-flatpak \
   /usr/local/sbin/omarchy-container-init \
+  /usr/local/sbin/omarchy-container-patch-menu \
   /usr/local/sbin/omarchy-start-user \
   /etc/systemd/system/omarchy-user.service \
   /etc/systemd/user/omarchy-desktop.service \
@@ -56,6 +59,10 @@ visudo -cf /etc/sudoers.d/omarchy-container
 ! ldd /usr/bin/sunshine | grep -q "not found"
 grep -A2 -F "[omarchy]" /etc/pacman.conf | \
   grep -Fqx "SigLevel = Required DatabaseOptional"
+grep -Fq "\"install.gaming.steam-flatpak\":" \
+  /usr/share/omarchy/default/omarchy/omarchy-menu.jsonc
+grep -Fq "omarchy-pkg-add steam" /usr/bin/omarchy-install-gaming-steam
+! flatpak info --system com.valvesoftware.Steam >/dev/null 2>&1
 
 pacman -Q \
   omarchy omarchy-settings sunshine hyprland quickshell uwsm flatpak \

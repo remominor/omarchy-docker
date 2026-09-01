@@ -29,6 +29,12 @@ tooling, along with the desktop, development, and application utilities. The
 Arch `multilib` repository is enabled so Steam and 32-bit graphics dependencies
 can resolve.
 
+The general image does not preinstall Steam. Omarchy's Install menu offers both
+the original **Steam (native)** package action and **Steam (Flatpak,
+persistent)**. The latter installs beneath the persistent user home and is the
+portable choice while affected NVIDIA container runtime releases omit
+host-matched 32-bit driver libraries.
+
 `core` installs a smaller curated runtime set for minimal images. It filters
 that make no sense or are unsafe in a Docker desktop (boot/session manager,
 host firewall/network manager, kernel hooks, nested Docker, power/display
@@ -36,6 +42,12 @@ hardware controls, and binfmt registration).
 
 Use `core` when image size and a smaller package surface are more important than
 matching the complete Omarchy userspace.
+
+For a native gaming-focused derivative, `dockerfile.gaming` adds Steam, UMU,
+Gamescope, MangoHud, and GameMode without baking an NVIDIA driver. It is
+experimental until the NVIDIA runtime's corrected compat32 discovery is
+available on the host; see
+[Gaming image variant](docs/templates.md#gaming-image-variant).
 
 ## Local build validation
 
@@ -123,11 +135,10 @@ cp unraid/omarchy-docker.xml \
   /boot/config/plugins/dockerMan/templates-user/my-omarchy-docker.xml
 ```
 
-The XML follows the simple headless profile: it uses host networking and
-privileged mode, so no input rule or device-by-device mapping is required.
-Stop any other Sunshine instance using the host's standard ports before
-starting it. If host Sunshine must remain active, use one of the non-headless
-Compose profiles on a custom network with a dedicated IP instead.
+The XML follows the headless input profile but uses an Unraid custom LAN
+network, a dedicated IP, and explicit devices/capabilities instead of
+privileged mode. This avoids collisions with host SSH, Sunshine, and other
+services while making all container ports reachable on its own address.
 
 The template's **Overview**, **Requires**, and individual field descriptions
 document the complete runtime contract. In particular:
@@ -282,11 +293,12 @@ project directory; override `APPDATA_PATH` when starting on another host.
 
 The image copies Omarchy's `/etc/skel` defaults into an empty persistent home
 on first boot. Existing files are not overwritten. Per-user application data
-and Flatpak installations belong in that home bind mount; the full profile
-ships Steam from Flathub because it can match its NVIDIA runtime to the host
-driver. Native Steam was verified to work only after its 32-bit NVIDIA library
-was made to exactly match the injected host driver; Pacman cannot guarantee
-that match in a portable image. Image-level package changes require a rebuild.
+and per-user Flatpak installations belong in that home bind mount. The Install
+menu's persistent Flatpak Steam option can match its NVIDIA runtime to the host
+driver and survives container recreation. Native Steam was verified to work
+only after its 32-bit NVIDIA library was made to exactly match the injected
+host driver; Pacman cannot guarantee that match in a portable image.
+Image-level package changes require a rebuild.
 See [Deployment templates](docs/templates.md#why-native-steam-is-not-the-default)
 for the confirmed NVIDIA JIT-CDI compat32 diagnosis, the two Steam comparison
 images, and the update, persistence, and Flatpak guidance.
