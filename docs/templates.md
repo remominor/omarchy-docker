@@ -99,8 +99,8 @@ install mechanism: system packages belong in the Dockerfile/profile and the
 monthly image rebuild process.
 
 Flatpak is available in the image. The full profile includes Steam from Flathub
-because the native Steam package is incompatible with the container's 32-bit
-GLX path; Omarchy's Steam setup action launches that Flatpak. Other Flatpak
+because it can select an NVIDIA runtime extension that matches the active host
+driver; Omarchy's Steam setup action launches that Flatpak. Other Flatpak
 applications should be installed as the `omarchy` user so they persist in the
 home bind mount:
 
@@ -115,6 +115,45 @@ Docker already provides proc, and Flatpak setup must tolerate an existing proc
 mount (`mountpoint -q /proc || mount -t proc none /proc`). The `/dev/fuse`,
 `SYS_ADMIN`, and unconfined seccomp settings already present in the non-headless
 profiles are the relevant prerequisites.
+
+### Why native Steam is not the default
+
+Native Steam requires working 32-bit OpenGL and Vulkan libraries. NVIDIA
+Container Toolkit supplies the active host driver's 64-bit userspace to the
+container, so the image deliberately excludes `nvidia-utils` from Pacman
+transactions. Pacman therefore cannot reliably infer which
+`lib32-nvidia-utils` provider matches that injected driver.
+
+This failure was reproduced on a host running NVIDIA `610.57.04`: installing
+the native `steam` package automatically selected
+`lib32-nvidia-580xx-utils 580.178.04`. `glxinfo32 -B` then failed with
+`X_GLXCreateNewContext`/`BadValue`, and Steam crashed immediately after its
+updater started. Replacing that package in a disposable test container with
+the matching `lib32-nvidia-utils 610.57.04` made `glxinfo32` pass and native
+Steam successfully opened its sign-in window. This confirms a driver-library
+version mismatch rather than a fundamental Xwayland or Hyprland limitation.
+
+Pacman can also choose an unrelated generic Vulkan provider when
+`nvidia-utils` is excluded, because it does not know that NVIDIA Container
+Toolkit has already supplied the 64-bit implementation. Forcing packages with
+dependency checks disabled was useful to prove the diagnosis, but is not a
+supported deployment solution.
+
+For troubleshooting, compare the active driver and installed 32-bit provider,
+then test the 32-bit GLX path:
+
+```bash
+nvidia-smi --query-gpu=driver_version --format=csv,noheader
+pacman -Q | grep -E 'lib32-(nvidia|libglvnd|mesa)'
+glxinfo32 -B
+```
+
+A native package baked into a generic image would only work for hosts using
+that exact NVIDIA driver branch. Dynamically downloading a matching package is
+also fragile because the version may no longer be in the current repositories
+and would mutate the container system layer. Flatpak Steam remains the
+supported portable default. Native Steam is an advanced, host-driver-specific
+experiment until a reliable 32-bit NVIDIA injection mechanism is available.
 
 Monthly Omarchy releases should produce a new image from `main`; live CVE
 patches can be installed for testing, then incorporated into the next image

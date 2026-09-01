@@ -283,10 +283,12 @@ project directory; override `APPDATA_PATH` when starting on another host.
 The image copies Omarchy's `/etc/skel` defaults into an empty persistent home
 on first boot. Existing files are not overwritten. Per-user application data
 and Flatpak installations belong in that home bind mount; the full profile
-ships Steam from Flathub because the native package's 32-bit GLX path is not
-usable in this container; image-level package
-changes require a rebuild. See [Deployment templates](docs/templates.md) for
-the update and Flatpak/proc guidance.
+ships Steam from Flathub because it can match its NVIDIA runtime to the host
+driver. Native Steam was verified to work only after its 32-bit NVIDIA library
+was made to exactly match the injected host driver; Pacman cannot guarantee
+that match in a portable image. Image-level package changes require a rebuild.
+See [Deployment templates](docs/templates.md#why-native-steam-is-not-the-default)
+for the diagnosis and the update, persistence, and Flatpak guidance.
 
 For a clean retry, stop and remove the container, move the two persistent
 directories aside, then recreate it from Compose or DockerMan. Moving them

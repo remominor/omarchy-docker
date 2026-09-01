@@ -117,6 +117,9 @@ and compositor implementation should not be copied into this image.
 - [x] Moonlight audio works through `omarchy_stream.monitor`.
 - [x] Moonlight controller input works, including a macOS DualSense client.
 - [x] Flatpak Steam installs and launches games in native Linux and Proton modes.
+- [x] Native Steam's GLX crash is diagnosed as a mismatched 32-bit NVIDIA
+      userspace; matching it to the injected host driver opens the Steam UI,
+      but is not portable enough to replace Flatpak as the default.
 - [x] Persistent home and Sunshine credentials survive recreation.
 - [x] CachyOS bridge Compose and dedicated-IP Unraid XML deployment modes are
       documented separately.
