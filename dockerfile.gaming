@@ -27,6 +27,11 @@ RUN set -eux; \
       gamescope mangohud lib32-mangohud \
       gamemode lib32-gamemode; \
     usermod -aG gamemode omarchy; \
+    # Arch's package limit assumes a host PAM session can raise RLIMIT_NICE.
+    # Docker inherits a fixed hard limit, and pam_limits would then prevent
+    # systemd --user from starting at all. CAP_SYS_NICE is retained for the
+    # processes that can use it, without applying the incompatible PAM rule.
+    rm -f /etc/security/limits.d/10-gamemode.conf; \
     userdel -r gaming-packagebuilder; \
     rm -rf /tmp/omarchy-container-gpu-runtime; \
     pacman -Scc --noconfirm

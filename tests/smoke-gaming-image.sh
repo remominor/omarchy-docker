@@ -16,6 +16,7 @@ pacman -Q \
 
 pacman -T
 id -nG omarchy | grep -qw gamemode
+test ! -e /etc/security/limits.d/10-gamemode.conf
 
 for command in steam umu-run gamescope mangohud gamemoderun; do
   command -v "$command" >/dev/null || {

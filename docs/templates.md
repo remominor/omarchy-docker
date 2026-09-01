@@ -248,6 +248,11 @@ a Container Toolkit release containing the JIT-CDI compat32 fix (or an
 equivalent corrected CDI specification) before native Steam/UMU can be
 considered supported.
 
+The variant removes GameMode's host-oriented PAM `nice -10` limit. Docker's
+fixed inherited hard limit makes that rule fail during `systemd --user` startup;
+removing it keeps the desktop bootable while preserving the GameMode daemon and
+the container's `SYS_NICE` capability.
+
 Build and select it with:
 
 ```bash
