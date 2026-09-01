@@ -82,7 +82,7 @@ mount -t proc proc /proc 2>/dev/null || true
 input_mode="${OMARCHY_INPUT_MODE:-headless}"
 case "$input_mode" in
   headless|seat9) /usr/local/bin/omarchy-sync-input-nodes & ;;
-  bridge) ;;
+  bridge) OMARCHY_SYNC_GAMEPADS_ONLY=1 /usr/local/bin/omarchy-sync-input-nodes & ;;
   *) echo "ERROR: unsupported OMARCHY_INPUT_MODE=$input_mode" >&2; exit 2 ;;
 esac
 
