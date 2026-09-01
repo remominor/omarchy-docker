@@ -120,4 +120,5 @@ and compositor implementation should not be copied into this image.
 - [x] Persistent home and Sunshine credentials survive recreation.
 - [x] CachyOS bridge Compose and dedicated-IP Unraid XML deployment modes are
       documented separately.
-- [ ] Same-GPU coexistence is tested only after the independent path passes.
+- [x] Same-GPU use between the CachyOS host and Omarchy container is verified;
+      simultaneous Moonlight sessions remain untested.

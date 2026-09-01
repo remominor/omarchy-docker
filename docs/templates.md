@@ -54,24 +54,23 @@ change so rendering, user services, audio, and input failures stay distinct.
 Use this checklist after monthly image rebuilds or when changing the desktop
 profile. It is intentionally manual and is not a bridge acceptance gate.
 
-- [ ] Start each selected profile and confirm its health status becomes
-  `healthy`.
-- [ ] Confirm the named Hyprland output has the requested resolution, refresh,
+- [x] Start the bridge profile and confirm its health status becomes `healthy`.
+- [x] Confirm the named Hyprland output has the requested resolution, refresh,
   and scale.
-- [ ] Open Quickshell panels, Foot, Chromium, and Nautilus through Moonlight.
-- [ ] Verify clipboard copy/paste, screenshots, notifications, and file dialogs.
-- [ ] Verify PipeWire audio reaches Sunshine and survives a reconnect.
-- [ ] Confirm Sunshine reports NVENC rather than software encoding.
-- [ ] If SSH is enabled, recreate the container and confirm the authorized key
+- [x] Open Quickshell panels, Foot, Chromium, and Nautilus through Moonlight.
+- [x] Verify clipboard copy/paste, screenshots, notifications, and file dialogs.
+- [x] Verify PipeWire audio reaches Sunshine and survives a reconnect.
+- [x] Confirm Sunshine reports NVENC rather than software encoding.
+- [x] If SSH is enabled, recreate the container and confirm the authorized key
   still works and `sshd` starts automatically; containers without an
   authorized key must remain SSH-disabled.
-- [ ] Reconnect Moonlight repeatedly and check for stale sessions or stuck
+- [x] Reconnect Moonlight repeatedly and check for stale sessions or stuck
   keyboard/pointer buttons.
-- [ ] Confirm startup logs report `/dev/uinput is available`; if it is missing,
+- [x] Confirm startup logs report `/dev/uinput is available`; if it is missing,
   Sunshine cannot create virtual keyboard, mouse, or gamepad devices. With a
   controller connected, confirm its Sunshine gamepad event node also appears
   under `/dev/input` and is visible to Steam.
-- [ ] For `bridge`, run `omarchy-container-check` and confirm `/host/input` is
+- [x] For `bridge`, run `omarchy-container-check` and confirm `/host/input` is
   read-only and bridge readiness is published.
 - [ ] For `seat9`, verify the host rule is installed and host input remains
   isolated.

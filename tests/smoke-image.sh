@@ -39,6 +39,7 @@ for path in \
 done
 
 for script in /usr/local/bin/omarchy-* /usr/local/sbin/omarchy-*; do
+  [[ -f "$script" && "$(head -c2 "$script")" == \#\! ]] || continue
   bash -n "$script"
 done
 
