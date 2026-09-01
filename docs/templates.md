@@ -68,7 +68,9 @@ profile. It is intentionally manual and is not a bridge acceptance gate.
 - [ ] Reconnect Moonlight repeatedly and check for stale sessions or stuck
   keyboard/pointer buttons.
 - [ ] Confirm startup logs report `/dev/uinput is available`; if it is missing,
-  Sunshine cannot create virtual keyboard, mouse, or gamepad devices.
+  Sunshine cannot create virtual keyboard, mouse, or gamepad devices. With a
+  controller connected, confirm its Sunshine gamepad event node also appears
+  under `/dev/input` and is visible to Steam.
 - [ ] For `bridge`, run `omarchy-container-check` and confirm `/host/input` is
   read-only and bridge readiness is published.
 - [ ] For `seat9`, verify the host rule is installed and host input remains

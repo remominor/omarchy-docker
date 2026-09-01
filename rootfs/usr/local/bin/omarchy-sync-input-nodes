@@ -18,6 +18,7 @@ classify_device() {
     "Keyboard passthrough (${seat})") device_kind=keyboard ;;
     "Mouse passthrough (${seat})") device_kind=mouse ;;
     "Mouse passthrough (${seat}) (absolute)") device_kind=mouse_absolute ;;
+    *"(${seat})"*) device_kind=gamepad ;;
     *) return 1 ;;
   esac
 }
@@ -39,6 +40,9 @@ set_properties() {
         "ID_INPUT_HEIGHT_MM=428"
         ".INPUT_CLASS=mouse"
       )
+      ;;
+    gamepad)
+      properties+=("ID_INPUT_JOYSTICK=1" ".INPUT_CLASS=joystick")
       ;;
   esac
 }
