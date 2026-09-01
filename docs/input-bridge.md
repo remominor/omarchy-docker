@@ -31,8 +31,10 @@ and mouse events into Hyprland through Wayland virtual-input protocols.
 - Logs contain state and device identity, not raw key contents.
 - `omarchy-container-check` reports service state, process identity, mounts,
   readiness, compositor environment, and recent bridge errors/grabs.
-- Gamepads, touchscreens, tablets, and other non-keyboard/mouse devices remain
-  out of scope.
+- Gamepads are mirrored separately from Sunshine's virtual event nodes so Steam
+  and other applications can consume them without duplicating bridge keyboard
+  and mouse devices. Touchscreens, tablets, and other non-gamepad devices
+  remain out of scope.
 
 ## Validation completed
 

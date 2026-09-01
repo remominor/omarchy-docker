@@ -93,6 +93,7 @@ these exact names:
 Keyboard passthrough (seat9)
 Mouse passthrough (seat9)
 Mouse passthrough (seat9) (absolute)
+Sunshine X-Box One (virtual) pad (seat9)
 ```
 
 For each matching event device it creates the private `/dev/input/eventN`,
