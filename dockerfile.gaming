@@ -1,10 +1,11 @@
 ARG BASE_IMAGE=local/omarchy-base:dev
 FROM ${BASE_IMAGE}
 
-# Native Steam and UMU require generic 32-bit Vulkan providers. NVIDIA's
-# actual vendor libraries must still come from the host driver through the
-# NVIDIA Container Toolkit; baking a particular driver version into this image
-# would make it less portable and risks a userspace/kernel mismatch.
+# Flatpak Steam uses its host-matched GL/GL32 runtime extensions. Do not install
+# native Steam here: its dependency resolution adds a generic 32-bit GL stack
+# which currently interferes with Flatpak Proton when NVIDIA CDI omits the
+# matching host compat32 vendor libraries. UMU, Gamescope, MangoHud, and
+# GameMode remain available for gaming workflows.
 RUN set -eux; \
     useradd -m -s /bin/bash gaming-packagebuilder; \
     install -d -o gaming-packagebuilder -g gaming-packagebuilder \
@@ -15,7 +16,6 @@ RUN set -eux; \
       'pkgrel=1' \
       'pkgdesc="Virtual Vulkan providers supplied by the container runtime"' \
       'arch=("any")' \
-      'provides=("vulkan-driver" "lib32-vulkan-driver")' \
       'package() { install -Dm0644 /dev/null "$pkgdir/usr/share/omarchy-container/gpu-runtime-provider"; }' \
       > /tmp/omarchy-container-gpu-runtime/PKGBUILD; \
     runuser -u gaming-packagebuilder -- bash -lc \
@@ -23,9 +23,12 @@ RUN set -eux; \
     pacman -U --noconfirm \
       /tmp/omarchy-container-gpu-runtime/omarchy-container-gpu-runtime-1-1-any.pkg.tar.*; \
     pacman -S --noconfirm --needed \
-      steam umu-launcher \
+      umu-launcher \
       gamescope mangohud lib32-mangohud \
       gamemode lib32-gamemode; \
+    flatpak remote-add --if-not-exists flathub \
+      https://flathub.org/repo/flathub.flatpakrepo; \
+    flatpak install --system --noninteractive flathub com.valvesoftware.Steam; \
     usermod -aG gamemode omarchy; \
     # Arch's package limit assumes a host PAM session can raise RLIMIT_NICE.
     # Docker inherits a fixed hard limit, and pam_limits would then prevent
@@ -36,4 +39,4 @@ RUN set -eux; \
     rm -rf /tmp/omarchy-container-gpu-runtime; \
     pacman -Scc --noconfirm
 
-LABEL org.opencontainers.image.description="Omarchy Docker gaming variant with native Steam, UMU, Gamescope, MangoHud, and GameMode"
+LABEL org.opencontainers.image.description="Omarchy Docker gaming variant with Flatpak Steam, UMU, Gamescope, MangoHud, and GameMode"

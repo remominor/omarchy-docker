@@ -1,0 +1,11 @@
+services:
+  omarchy:
+    networks:
+      omarchy_ipvlan:
+        ipv4_address: ${OMARCHY_IPVLAN_IP:-10.50.0.56}
+    ports: !reset []
+
+networks:
+  omarchy_ipvlan:
+    external: true
+    name: ${OMARCHY_IPVLAN_NETWORK:-omarchy_ipvlan}
