@@ -781,6 +781,45 @@ would recreate the confirmed Flatpak Proton regression. Flatpak games need a
 Flatpak-compatible MangoHud Vulkan layer rather than the outer-container
 32-bit package.
 
+### MangoHud with Flatpak Steam
+
+The image's native 64-bit `mangohud` package remains useful for compatible
+outer-container applications, but it is not automatically visible inside the
+Steam Flatpak sandbox. For Flatpak Steam games, install the Freedesktop Vulkan
+layer matching Steam's runtime branch instead:
+
+```bash
+flatpak install --system flathub \
+  org.freedesktop.Platform.VulkanLayer.MangoHud//25.08
+```
+
+The branch must match the Freedesktop Platform reported by:
+
+```bash
+flatpak info --show-runtime com.valvesoftware.Steam
+```
+
+Enable it for an individual Steam game with this launch option:
+
+```text
+MANGOHUD=1 %command%
+```
+
+To share the normal persistent MangoHud configuration with Flatpak Steam, run
+as the `omarchy` desktop user:
+
+```bash
+flatpak override --user \
+  --filesystem=xdg-config/MangoHud:ro \
+  com.valvesoftware.Steam
+```
+
+Keep the runtime branch synchronized after Steam moves to a newer Freedesktop
+Platform. The optional Vulkan layer is installed separately for each branch;
+`flatpak update` does not replace an older branch with the new one. See the
+[Flathub MangoHud extension](https://github.com/flathub/org.freedesktop.Platform.VulkanLayer.MangoHud)
+for current configuration guidance.
+
 The validated CachyOS result establishes that a Flatpak-focused gaming build should not add a native generic 32-bit graphics stack merely to support Flatpak Steam.
 
 For NVIDIA, the gaming image should therefore explicitly define which Steam mode it targets.
