@@ -43,11 +43,11 @@ hardware controls, and binfmt registration).
 Use `core` when image size and a smaller package surface are more important than
 matching the complete Omarchy userspace.
 
-For a native gaming-focused derivative, `dockerfile.gaming` adds Steam, UMU,
-Gamescope, MangoHud, and GameMode without baking an NVIDIA driver. It is
-experimental until the NVIDIA runtime's corrected compat32 discovery is
-available on the host; see
-[Gaming image variant](docs/templates.md#gaming-image-variant).
+For a gaming-focused derivative, `dockerfile.gaming` adds system Flatpak Steam,
+UMU, Gamescope, MangoHud, and GameMode without baking an NVIDIA driver. Flatpak
+Steam owns its matching NVIDIA GL/GL32 runtime; native Steam remains a separate
+experimental path until corrected compat32 discovery is available on the host.
+See [Gaming image](docs/templates.md#gaming-image).
 
 ## Local build validation
 
@@ -299,7 +299,7 @@ driver and survives container recreation. Native Steam was verified to work
 only after its 32-bit NVIDIA library was made to exactly match the injected
 host driver; Pacman cannot guarantee that match in a portable image.
 Image-level package changes require a rebuild.
-See [Deployment templates](docs/templates.md#why-native-steam-is-not-the-default)
+See [Steam installation models](docs/templates.md#steam-installation-models)
 for the confirmed NVIDIA JIT-CDI compat32 diagnosis, the two Steam comparison
 images, and the update, persistence, and Flatpak guidance.
 

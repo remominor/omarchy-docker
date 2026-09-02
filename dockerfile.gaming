@@ -7,24 +7,9 @@ FROM ${BASE_IMAGE}
 # matching host compat32 vendor libraries. UMU, Gamescope, MangoHud, and
 # GameMode remain available for gaming workflows.
 RUN set -eux; \
-    useradd -m -s /bin/bash gaming-packagebuilder; \
-    install -d -o gaming-packagebuilder -g gaming-packagebuilder \
-      /tmp/omarchy-container-gpu-runtime; \
-    printf '%s\n' \
-      'pkgname=omarchy-container-gpu-runtime' \
-      'pkgver=1' \
-      'pkgrel=1' \
-      'pkgdesc="Virtual Vulkan providers supplied by the container runtime"' \
-      'arch=("any")' \
-      'package() { install -Dm0644 /dev/null "$pkgdir/usr/share/omarchy-container/gpu-runtime-provider"; }' \
-      > /tmp/omarchy-container-gpu-runtime/PKGBUILD; \
-    runuser -u gaming-packagebuilder -- bash -lc \
-      'cd /tmp/omarchy-container-gpu-runtime && makepkg --noconfirm'; \
-    pacman -U --noconfirm \
-      /tmp/omarchy-container-gpu-runtime/omarchy-container-gpu-runtime-1-1-any.pkg.tar.*; \
     pacman -S --noconfirm --needed \
       umu-launcher \
-      gamescope mangohud lib32-mangohud \
+      gamescope mangohud \
       gamemode lib32-gamemode; \
     flatpak remote-add --if-not-exists flathub \
       https://flathub.org/repo/flathub.flatpakrepo; \
@@ -35,8 +20,6 @@ RUN set -eux; \
     # systemd --user from starting at all. CAP_SYS_NICE is retained for the
     # processes that can use it, without applying the incompatible PAM rule.
     rm -f /etc/security/limits.d/10-gamemode.conf; \
-    userdel -r gaming-packagebuilder; \
-    rm -rf /tmp/omarchy-container-gpu-runtime; \
     pacman -Scc --noconfirm
 
 LABEL org.opencontainers.image.description="Omarchy Docker gaming variant with Flatpak Steam, UMU, Gamescope, MangoHud, and GameMode"
