@@ -187,6 +187,31 @@ persistent Flatpak Steam option remains the supported portable path. Native
 Steam is an advanced, host-driver-specific experiment until NVIDIA ships the
 CDI fix broadly.
 
+#### Confirmed gaming-image interaction
+
+The local gaming image provided a useful A/B result. The earlier bridge image
+had no native 32-bit graphics stack, and Flatpak Steam's Proton path worked.
+The gaming image added `lib32-libglvnd`, `lib32-mesa`, and
+`lib32-vulkan-icd-loader`; with those packages present, the same Flatpak game
+failed to initialize Vulkan. Removing only `lib32-libglvnd` and `lib32-mesa`
+from a disposable running container restored Flatpak Proton immediately, while
+native Steam then failed with the expected missing-32-bit-library error.
+
+These packages are installed inside the image, not passed through from the
+host. In particular, `steam` depends on the virtual `lib32-vulkan-driver`,
+`lib32-vulkan-icd-loader`, and other 32-bit graphics providers; Arch's normal
+provider selection pulls in `lib32-libglvnd`, which in turn depends on generic
+`lib32-mesa`. NVIDIA Container Toolkit separately injects the host NVIDIA
+vendor libraries at container startup. With the released CDI path, it injects
+the 64-bit vendor libraries but omits the matching `/usr/lib32` vendor files.
+The result is a mixed stack: generic image 32-bit libraries alongside
+host-injected 64-bit NVIDIA libraries. That is why the versions do not match.
+
+Until compat32 CDI injection is fixed, Flatpak Steam should be tested without
+the image's native `lib32-libglvnd`/`lib32-mesa` stack. Native Steam and UMU
+remain experimental on NVIDIA hosts; they require matching host 32-bit vendor
+libraries and may conflict with the Flatpak graphics sandbox.
+
 ### Steam comparison images
 
 Two thin diagnostic Dockerfiles allow the same Omarchy base image to be tested
