@@ -1,11 +1,50 @@
-FROM archlinux:base-devel
-
 ARG OMARCHY_CHANNEL=stable
-ARG OMARCHY_PROFILE=full
+ARG OMARCHY_PROFILE=core
 ARG FAKE_UDEV_COMMIT=903a070b9eee733e146dfe03dc18173caf9eb010
 ARG FAKE_UDEV_SHA256=69368c27a7b996e3e086f1a96d8a9f3ef19c2fdaf5b5ace9ea6b7f34b45f4681
 ARG SUNSHINE_VERSION=2026.516.143833
 ARG SUNSHINE_SHA256=676539cfb079f81f38e7001b85d72c39cd5bf25abe0956bab4577cb25afc5299
+
+FROM archlinux:base-devel AS builder
+
+ARG OMARCHY_CHANNEL
+
+RUN set -eux; \
+    case "${OMARCHY_CHANNEL}" in \
+      stable) ARCH_MIRROR='https://stable-mirror.omarchy.org/$repo/os/$arch' ;; \
+      edge)   ARCH_MIRROR='https://mirror.omarchy.org/$repo/os/$arch' ;; \
+      *) echo "Unsupported OMARCHY_CHANNEL=${OMARCHY_CHANNEL}" >&2; exit 2 ;; \
+    esac; \
+    printf 'Server = %s\n' "${ARCH_MIRROR}" > /etc/pacman.d/mirrorlist; \
+    pacman -Syu --noconfirm --needed wayland libxkbcommon
+
+COPY src/input-bridge/ /tmp/omarchy-input-bridge/
+
+RUN make -C /tmp/omarchy-input-bridge
+
+RUN set -eux; \
+    useradd -m -s /bin/bash packagebuilder; \
+    install -d -o packagebuilder -g packagebuilder /tmp/omarchy-container-stubs; \
+    printf '%s\n' \
+      'pkgname=omarchy-container-stubs' \
+      'pkgver=1' \
+      'pkgrel=1' \
+      'pkgdesc="Container-only virtual providers for Omarchy machine dependencies"' \
+      'arch=("any")' \
+      'provides=("limine" "limine-mkinitcpio-hook" "limine-snapper-sync" "snapper" "sddm")' \
+      'package() { mkdir -p "$pkgdir/usr/share/omarchy-container"; printf "container stub\\n" > "$pkgdir/usr/share/omarchy-container/stubs"; }' \
+      > /tmp/omarchy-container-stubs/PKGBUILD; \
+    runuser -u packagebuilder -- bash -lc \
+      'cd /tmp/omarchy-container-stubs && makepkg --noconfirm'
+
+FROM archlinux:base
+
+ARG OMARCHY_CHANNEL
+ARG OMARCHY_PROFILE
+ARG FAKE_UDEV_COMMIT
+ARG FAKE_UDEV_SHA256
+ARG SUNSHINE_VERSION
+ARG SUNSHINE_SHA256
 
 ENV container=docker \
     OMARCHY_PATH=/usr/share/omarchy
@@ -40,14 +79,8 @@ RUN set -eux; \
       bash bash-completion ca-certificates curl dbus git glib2 \
       sudo shadow util-linux procps-ng iproute2 iputils jq perl \
       systemd polkit pambase libinput evtest flatpak xdg-desktop-portal \
-      base-devel fakeroot pacman-contrib \
       libglvnd egl-wayland vulkan-icd-loader libva mesa-utils vulkan-tools; \
     rm -rf /tmp/container-install-shims
-
-# Build the optional bridge binary once; the compose template selects whether
-# it is used at runtime.
-RUN set -eux; \
-    pacman -S --noconfirm --needed wayland libxkbcommon
 
 # Install the statically linked Games-on-Whales fake-udev emitter from a
 # pinned revision. It publishes synthetic GROUP_UDEV events inside the
@@ -59,56 +92,37 @@ RUN set -eux; \
     printf '%s  %s\n' "${FAKE_UDEV_SHA256}" /usr/local/bin/fake-udev | sha256sum -c -; \
     chmod 0755 /usr/local/bin/fake-udev
 
+COPY --from=builder /tmp/omarchy-container-stubs/omarchy-container-stubs-1-1-any.pkg.tar.zst /tmp/omarchy-container-stubs.pkg.tar.zst
+COPY --from=builder /tmp/omarchy-input-bridge/build/omarchy-input-bridge /usr/local/bin/omarchy-input-bridge
+
 # Omarchy's meta package intentionally hard-depends on boot-machine components.
-# Supply empty "provides" packages for the pieces a Docker desktop must not own,
-# then install Omarchy normally so all *other* runtime dependencies stay current.
+# Install the empty provider package built in the disposable toolchain stage,
+# then install Omarchy normally so its runtime dependencies remain current.
 RUN set -eux; \
-    useradd -m -s /bin/bash packagebuilder; \
-    mkdir -p /tmp/omarchy-container-stubs; \
-    chown packagebuilder:packagebuilder /tmp/omarchy-container-stubs; \
-    printf '%s\n' \
-      'pkgname=omarchy-container-stubs' \
-      'pkgver=1' \
-      'pkgrel=1' \
-      'pkgdesc="Container-only virtual providers for Omarchy machine dependencies"' \
-      'arch=("any")' \
-      'provides=("limine" "limine-mkinitcpio-hook" "limine-snapper-sync" "snapper" "sddm")' \
-      'package() { mkdir -p "$pkgdir/usr/share/omarchy-container"; printf "container stub\n" > "$pkgdir/usr/share/omarchy-container/stubs"; }' \
-      > /tmp/omarchy-container-stubs/PKGBUILD; \
-    runuser -u packagebuilder -- bash -lc 'cd /tmp/omarchy-container-stubs && makepkg --noconfirm'; \
-    pacman -U --noconfirm /tmp/omarchy-container-stubs/omarchy-container-stubs-1-1-any.pkg.tar.*; \
+    test "${OMARCHY_PROFILE}" = core || { \
+      echo "Dockerfile builds the core runtime; use dockerfile.full for the filtered upstream package set" >&2; \
+      exit 2; \
+    }; \
+    pacman -U --noconfirm /tmp/omarchy-container-stubs.pkg.tar.zst; \
     sed -i '/^[[:space:]]*SigLevel[[:space:]]*=/s/.*/SigLevel = Optional TrustAll/' /etc/pacman.conf; \
     pacman -S --noconfirm --needed omarchy-settings omarchy; \
     sed -i 's/^SigLevel = Optional TrustAll$/SigLevel = Required DatabaseOptional/' /etc/pacman.conf; \
     pacman -Syy --noconfirm; \
-    case "${OMARCHY_PROFILE}" in \
-      core) \
-        pacman -S --noconfirm --needed \
-          alsa-utils pipewire-alsa pipewire-jack pipewire-pulse \
-          xdg-desktop-portal-gtk xdg-terminal-exec \
-          xdg-desktop-portal flatpak \
-          foot neovim nano less chromium nautilus udiskie \
-          cliamp mise yay \
-          wl-clipboard grim slurp socat pamixer \
-          hyprpicker hyprsunset gpu-screen-recorder \
-          fastfetch imv inotify-tools \
-          noto-fonts noto-fonts-cjk noto-fonts-emoji ;; \
-      full) \
-        sed -E '/^[[:space:]]*#/d; /^[[:space:]]*$/d' \
-          /usr/share/omarchy/install/omarchy-base.packages | \
-          grep -Ev '^(asdcontrol|bolt|brightnessctl|ddcutil|docker|docker-buildx|docker-compose|kernel-modules-hook|networkmanager|power-profiles-daemon|qemu-user-static-binfmt|sddm|ufw|ufw-docker)$|(^|[[:space:]])jack2([[:space:]]|$)' \
-          > /tmp/omarchy-container-full.packages; \
-        pacman -S --noconfirm --needed $(cat /tmp/omarchy-container-full.packages); \
-        rm -f /tmp/omarchy-container-full.packages; \
-        pacman -S --noconfirm --needed pipewire-alsa pipewire-pulse ;; \
-      *) echo "Unsupported OMARCHY_PROFILE=${OMARCHY_PROFILE}; use core or full" >&2; exit 2 ;; \
-    esac; \
+    pacman -S --noconfirm --needed \
+      alsa-utils pipewire-alsa pipewire-jack pipewire-pulse \
+      xdg-desktop-portal-gtk xdg-terminal-exec \
+      xdg-desktop-portal flatpak \
+      foot neovim nano less udiskie cliamp \
+      wl-clipboard grim slurp socat pamixer \
+      hyprpicker hyprsunset gpu-screen-recorder \
+      fastfetch imv inotify-tools \
+      noto-fonts noto-fonts-emoji \
+      bat eza fd fzf ripgrep tmux tree unzip zip p7zip which; \
     flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo; \
-    userdel -r packagebuilder; \
-    rm -rf /tmp/omarchy-container-stubs; \
+    rm -f /tmp/omarchy-container-stubs.pkg.tar.zst; \
     pacman -Scc --noconfirm
 
-# Keep the user-selectable terminal editors available in every profile. The
+# Keep the user-selectable terminal editors available in the core runtime. The
 # full Omarchy manifest does not currently include nano, even though the
 # Omarchy editor launcher supports it.
 RUN pacman -S --noconfirm --needed nano less
@@ -149,7 +163,6 @@ RUN set -eux; \
       || true
 
 COPY rootfs/ /
-COPY src/input-bridge/ /tmp/omarchy-input-bridge/
 
 # Reboot, shutdown, and sleep actions do not make sense inside this container.
 # This also adds the persistent Flatpak Steam choice without replacing
@@ -157,10 +170,6 @@ COPY src/input-bridge/ /tmp/omarchy-input-bridge/
 RUN /usr/bin/bash /usr/local/sbin/omarchy-container-patch-menu \
       /usr/share/omarchy/default/omarchy/omarchy-menu.jsonc \
       /opt/omarchy-home-seed/.config/omarchy/extensions/omarchy-menu.jsonc
-
-RUN set -eux; \
-    make -C /tmp/omarchy-input-bridge install; \
-    rm -rf /tmp/omarchy-input-bridge
 
 RUN set -eux; \
     chmod 0755 \

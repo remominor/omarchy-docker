@@ -10,8 +10,8 @@ set -euo pipefail
 
 for command in \
   Hyprland hyprctl quickshell uwsm sunshine \
-  pipewire wireplumber pactl chromium foot nautilus jq systemctl \
-  evtest fake-udev flatpak; do
+  pipewire wireplumber pactl foot jq systemctl \
+  evtest fake-udev flatpak unzip rg fd fzf; do
   command -v "$command" >/dev/null || {
     echo "missing command: $command" >&2
     exit 1
@@ -67,6 +67,11 @@ grep -Fq "omarchy-pkg-add steam" /usr/bin/omarchy-install-gaming-steam
 pacman -Q \
   omarchy omarchy-settings sunshine hyprland quickshell uwsm flatpak \
   pipewire wireplumber
+
+if pacman -Qq | grep -Eq "^(base-devel|gcc|clang|llvm|chromium|libreoffice-fresh|kdenlive|obs-studio|docker)$"; then
+  echo "core image contains an unexpected development or optional desktop package" >&2
+  exit 1
+fi
 
 echo "image smoke checks passed"
 '

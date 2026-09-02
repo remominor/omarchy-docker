@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=local/omarchy-base:dev
+ARG BASE_IMAGE=local/omarchy-core:dev
 FROM ${BASE_IMAGE}
 
 # Flatpak Steam uses its host-matched GL/GL32 runtime extensions. Do not install

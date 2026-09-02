@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=local/omarchy-base:dev
+ARG BASE_IMAGE=local/omarchy-core:dev
 FROM ${BASE_IMAGE}
 
 LABEL org.opencontainers.image.description="Omarchy Docker native Arch Steam test variant"

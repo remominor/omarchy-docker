@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=local/omarchy-base:dev
+ARG BASE_IMAGE=local/omarchy-core:dev
 FROM ${BASE_IMAGE}
 
 # Native Steam and UMU require generic 32-bit Vulkan providers. NVIDIA's

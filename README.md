@@ -14,34 +14,30 @@ runtime dependency set without giving the container a bootloader, snapshot
 manager, or display manager.
 
 
-## Image profile
+## Image variants
 
-The default is:
+The main `Dockerfile` builds the minimal runtime:
 
 ```ini
-OMARCHY_PROFILE=full
+OMARCHY_PROFILE=core
 ```
 
-`full` installs the real Omarchy 4 runtime/settings packages plus nearly all
-packages from Omarchy's current base manifest, with machine-only components
-filtered for Docker. This includes Omarchy's `cliamp`, `mise`, and `yay`
-tooling, along with the desktop, development, and application utilities. The
-Arch `multilib` repository is enabled so Steam and 32-bit graphics dependencies
-can resolve.
+`core` installs the real Omarchy runtime/settings packages, Hyprland shell,
+audio, portals, terminal, Flatpak, streaming support, fonts, and practical
+command-line utilities. Build tools are confined to a disposable builder stage;
+the runtime starts from `archlinux:base` and does not contain Chromium,
+LibreOffice, Kdenlive, OBS, or the general development toolchain.
+
+`dockerfile.full` layers the filtered upstream `omarchy-base.packages` manifest
+over core for broad Omarchy desktop testing. Machine-only components remain
+excluded, but large applications and development tools are intentionally
+included in that variant.
 
 The general image does not preinstall Steam. Omarchy's Install menu offers both
 the original **Steam (native)** package action and **Steam (Flatpak,
 persistent)**. The latter installs beneath the persistent user home and is the
 portable choice while affected NVIDIA container runtime releases omit
 host-matched 32-bit driver libraries.
-
-`core` installs a smaller curated runtime set for minimal images. It filters
-that make no sense or are unsafe in a Docker desktop (boot/session manager,
-host firewall/network manager, kernel hooks, nested Docker, power/display
-hardware controls, and binfmt registration).
-
-Use `core` when image size and a smaller package surface are more important than
-matching the complete Omarchy userspace.
 
 For a gaming-focused derivative, `dockerfile.gaming` adds system Flatpak Steam,
 UMU, Gamescope, MangoHud, and GameMode without baking an NVIDIA driver. Flatpak
@@ -56,7 +52,7 @@ Build and load the default `core` image with Buildx:
 ```bash
 docker buildx build --load --progress=plain \
   --build-arg OMARCHY_CHANNEL=stable \
-  --build-arg OMARCHY_PROFILE=full \
+  --build-arg OMARCHY_PROFILE=core \
   -t local/omarchy:test .
 ```
 
@@ -65,6 +61,16 @@ libraries, and seeded configuration:
 
 ```bash
 ./tests/smoke-image.sh local/omarchy:test
+```
+
+Build the broad desktop derivative only when needed:
+
+```bash
+docker build -t local/omarchy-core:dev .
+docker build -f dockerfile.full \
+  --build-arg BASE_IMAGE=local/omarchy-core:dev \
+  -t local/omarchy-full:test .
+./tests/smoke-full-image.sh local/omarchy-full:test
 ```
 
 This smoke test does not prove GPU rendering, Wayland capture, NVENC, or input.
@@ -123,7 +129,7 @@ Build the image on Unraid before adding the template:
 ```bash
 docker build \
   --build-arg OMARCHY_CHANNEL=stable \
-  --build-arg OMARCHY_PROFILE=full \
+  --build-arg OMARCHY_PROFILE=core \
   -t local/omarchy-headless:latest .
 ```
 

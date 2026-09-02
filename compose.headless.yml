@@ -4,7 +4,7 @@ services:
       context: .
       args:
         OMARCHY_CHANNEL: ${OMARCHY_CHANNEL:-stable}
-        OMARCHY_PROFILE: ${OMARCHY_PROFILE:-full}
+        OMARCHY_PROFILE: ${OMARCHY_PROFILE:-core}
     image: ${OMARCHY_IMAGE:-local/omarchy-headless:latest}
     container_name: omarchy
     hostname: omarchy

@@ -1,6 +1,9 @@
 # Deployment templates
 
-The repository provides three runtime profiles. They share one Dockerfile and the same pinned CUDA-enabled Sunshine package; the Compose file selects the input topology.
+The repository provides three input templates. They share the same image and
+pinned CUDA-enabled Sunshine package; each Compose file selects a different
+input topology. These input templates are independent of the `core`, `full`,
+and `gaming` image variants.
 
 | File                   | Use when                                            | Host input requirement                        | Special mapping                                 |
 | ---------------------- | --------------------------------------------------- | --------------------------------------------- | ----------------------------------------------- |
@@ -8,7 +11,7 @@ The repository provides three runtime profiles. They share one Dockerfile and th
 | `compose.bridge.yml`   | Physical keyboard/mouse must be grabbed exclusively | None                                          | `/dev/input` read-only at `/host/input`         |
 | `compose.seat9.yml`    | Existing seat9 isolation is preferred               | Install `host/72-omarchy-sunshine-seat.rules` | No host `/dev/input` mapping                    |
 
-All profiles persist `/home/omarchy` and `/config` through host bind mounts.
+All input templates persist `/home/omarchy` and `/config` through host bind mounts.
 
 Compose defaults to the repository-relative `./appdata/omarchy-docker` path. Set `APPDATA_PATH` in `.env` to use another local path.
 
@@ -38,7 +41,15 @@ Changing Sunshine to arbitrary host ports is not a reliable workaround because s
 
 ## Useful Omarchy checks
 
-For broader Omarchy smoke testing, rebuild with `OMARCHY_PROFILE=full`, then exercise the desktop from Moonlight:
+For broader Omarchy smoke testing, build `dockerfile.full` over the core image,
+then exercise the desktop from Moonlight:
+
+```bash
+docker build -t local/omarchy-core:dev .
+docker build -f dockerfile.full \
+  --build-arg BASE_IMAGE=local/omarchy-core:dev \
+  -t local/omarchy-full:test .
+```
 
 * Quickshell panels
 * Foot
@@ -74,7 +85,7 @@ Use this checklist after monthly image rebuilds or when changing the desktop pro
 * [ ] Repeat the Flatpak Proton validation on Unraid using a clean image without native 32-bit graphics packages.
 * [ ] Validate native Steam/Proton on Unraid with the corrected host-matched compat32 CDI path.
 * [ ] For `seat9`, verify the host rule is installed and host input remains isolated.
-* [ ] Exercise additional Omarchy applications included by the `full` profile before promoting the rebuilt image.
+* [ ] Exercise additional Omarchy applications included by `dockerfile.full` before promoting the rebuilt image.
 
 ## Persistence and updates
 
@@ -704,10 +715,10 @@ dockerfile.flatpak-steam
 Build:
 
 ```bash
-docker build -t local/omarchy-base:dev .
+docker build -t local/omarchy-core:dev .
 
 docker build -f dockerfile.flatpak-steam \
-  --build-arg BASE_IMAGE=local/omarchy-base:dev \
+  --build-arg BASE_IMAGE=local/omarchy-core:dev \
   -t local/omarchy-flatpak-steam:test .
 ```
 
@@ -732,7 +743,7 @@ Build:
 
 ```bash
 docker build -f dockerfile.native-steam \
-  --build-arg BASE_IMAGE=local/omarchy-base:dev \
+  --build-arg BASE_IMAGE=local/omarchy-core:dev \
   -t local/omarchy-native-steam:test .
 ```
 
